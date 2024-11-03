@@ -52,12 +52,13 @@ void x_register(void *handle, const char *name, void **p) {
     // 使用 dlsym 获取符号地址，并将结果存储在 p 指向的位置  
     *(p) = dlsym(handle, name);
     // 检查 dlsym 是否成功，并打印日志  
-    const char *error = dlerror();
-    if (error != NULL) {
-        ALOGV("[wcdb] dlsym %s failed: %s", name, error);
-    } else {
-        ALOGV("[wcdb] dlsym %s: %p", name, *(p));
-    }
+//    const char *error = dlerror();
+//    if (error != NULL) {
+//        ALOGE("[wcdb] dlsym %s failed: %s", name, error);
+//    } else {
+//        ALOGV("[wcdb] dlsym %s: %p", name, *(p));
+//    }
+    ALOGV("[wcdb] dlsym %s: %p", name, *(p));
 }
 
 int load_lib_wcdb() {
