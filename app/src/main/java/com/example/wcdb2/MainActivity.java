@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private Database database;
     private Button btn1;
     private Button btn2;
+    private DaemonSocketServerThread socketServerThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,12 @@ public class MainActivity extends AppCompatActivity {
         btn2.setText("test wcdb2");
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
+
+//        if (socketServerThread == null) {
+//            Log.d(TAG, "start socket service");
+//            socketServerThread = new DaemonSocketServerThread();
+//            socketServerThread.start();
+//        }
     }
 
     private void onBtn1Click(View view) {
