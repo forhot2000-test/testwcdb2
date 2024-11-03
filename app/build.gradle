@@ -1,0 +1,65 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 30
+
+    defaultConfig {
+        applicationId "com.example.wcdb2"
+        minSdk 29
+        targetSdk 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.18.1'
+        }
+    }
+}
+
+dependencies {
+
+    /***** wcdb v2 begin ******/
+    // 以下示例修改"2.1.0"为最新版本号
+    implementation 'com.tencent.wcdb:main:2.1.4' // WCDB主模块，包含所有类和接口
+    implementation 'com.tencent.wcdb:annotation:2.1.4' // 包含用于ORM配置的注解
+
+    // 下面两个配置选择配置一个，apt和ksp选用一个，不能同时配置
+    annotationProcessor 'com.tencent.wcdb:compiler:2.1.4'
+    // 如果要使用Kotlin的ORM则需要配置ksp，使用ksp还需要专门为ksp做一些环境配置，请自行了解
+    // ksp 'com.tencent.wcdb:compiler:2.1.4'
+
+    // 如果要兼容使用WCDB 1.0版本或Android SDK SQLite的接口，则配置下面这个依赖
+    implementation 'com.tencent.wcdb:compat:2.1.4'
+    /***** wcdb v2 end ******/
+
+
+    //noinspection GradleCompatible
+    implementation "com.android.support:support-compat:${androidSupport}"
+    implementation "com.android.support.constraint:constraint-layout:${androidSupportConstraitLayout}"
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
