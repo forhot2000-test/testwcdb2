@@ -20,6 +20,11 @@ JavaVM *gvm;
 static int (*ori_xhook_sqlite3_open_v2)(const char *filename, void **db, int flags,
                                         const char *zVfs) = nullptr;
 
+
+static int (*ori_xhook_sqlite3_exec)(void *db, const char *sql, void *callback, void *,
+                                     char **errmsg) = nullptr;
+
+
 static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
     BYTEHOOK_STACK_SCOPE();
     int res = BYTEHOOK_CALL_PREV(hook_sqlite3_open_v2, filename, db, flags, zVfs);
@@ -28,8 +33,17 @@ static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, cons
 }
 
 static int hook_sqlite3_open_v2_2(const char *filename, void **db, int flags, const char *zVfs) {
-    ALOGD("hook_open_v2: %s, %p", filename, ori_xhook_sqlite3_open_v2);
+    ALOGD("hook_open_v2: filename=%s, ptr=%p", filename, ori_xhook_sqlite3_open_v2);
     int res = ori_xhook_sqlite3_open_v2(filename, db, flags, zVfs);
+    return res;
+}
+
+static int
+hook_sqlite3_exec_2(void *db, const char *sql, void *callback, void *data, char **errmsg) {
+    ALOGD("hook_exec: sql=%s, ptr=%p", sql, ori_xhook_sqlite3_exec);
+    int res = ori_xhook_sqlite3_exec(db, sql, callback, data, errmsg);
+    const char *filename = x_sqlite3_db_filename(db, "main");
+    ALOGD("hook_exec: filename=%s", filename);
     return res;
 }
 
@@ -57,10 +71,25 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 //
 //    xhook_refresh(1);
 //    ALOGD("xhook: %p", ori_xhook_sqlite3_open_v2);
+
+    load_lib_wcdb();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
+
+    xhook_clear();
+    xhook_enable_debug(1);
+    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
+                   reinterpret_cast<void *>(hook_sqlite3_open_v2_2),
+                   reinterpret_cast<void **>(&ori_xhook_sqlite3_open_v2));
+    xhook_register("/data/.*\\.so$", "sqlite3_exec",
+                   reinterpret_cast<void *>(hook_sqlite3_exec_2),
+                   reinterpret_cast<void **>(&ori_xhook_sqlite3_exec));
+
+    xhook_refresh(1);
+    ALOGD("xhook open_v2: %p", ori_xhook_sqlite3_open_v2);
+    ALOGD("xhook exec: %p", ori_xhook_sqlite3_exec);
 
 //    int result;
 //
@@ -69,15 +98,6 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //        ALOGE("load libWCDB.so failed");
 //        return;
 //    }
-
-    xhook_clear();
-    xhook_enable_debug(1);
-    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
-                   reinterpret_cast<void *>(hook_sqlite3_open_v2_2),
-                   reinterpret_cast<void **>(&ori_xhook_sqlite3_open_v2));
-
-    xhook_refresh(1);
-    ALOGD("xhook: %p", ori_xhook_sqlite3_open_v2);
 
 //    const char *filename = env->GetStringUTFChars(jfile, NULL);
 //    void *db;

@@ -57,7 +57,6 @@ void x_register(void *handle, const char *name, void **p) {
 //    } else {
 //        ALOGV("[wcdb] dlsym %s: %p", name, *(p));
 //    }
-    ALOGV("[wcdb] dlsym %s: %p", name, *(p));
 }
 
 int load_lib_wcdb() {
@@ -65,13 +64,13 @@ int load_lib_wcdb() {
         return LIB_LOAD_SUCCESS;
     }
 
-    std::string ns = "xxx_libWCDB.so";
-    ALOGD("ns=%s", ns.c_str());
-    if (ns.length() >= 10) {
-        std::string ns2 = ns.substr(ns.length() - 10, 10);
-        std::transform(ns2.begin(), ns2.end(), ns2.begin(), ::tolower);
-        ALOGD("ns2=%s, compare_result=%d", ns2.c_str(), ns2.compare("libwcdb.so"));
-    }
+//    std::string ns = "xxx_libWCDB.so";
+//    ALOGD("ns=%s", ns.c_str());
+//    if (ns.length() >= 10) {
+//        std::string ns2 = ns.substr(ns.length() - 10, 10);
+//        std::transform(ns2.begin(), ns2.end(), ns2.begin(), ::tolower);
+//        ALOGD("ns2=%s, compare_result=%d", ns2.c_str(), ns2.compare("libwcdb.so"));
+//    }
 
     void *handle = dlopen("libWCDB.so", RTLD_NOW);
 
