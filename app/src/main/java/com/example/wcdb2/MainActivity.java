@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btn1;
     private Button btn2;
     private DaemonSocketServerThread socketServerThread;
+    private String path;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +67,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void testWcdb() {
 //        Log.d(TAG, "test wcdb2");
-        File file = getBaseContext().getDatabasePath("sample.db");
-//        Log.d(TAG, file.getPath());
-        database = new Database(file.getPath());
+        path = getBaseContext().getDatabasePath("sample.db").getPath();
+//        Log.d(TAG, path);
+        database = new Database(path);
 
         database.createTable("sampleTable", DBSample.INSTANCE);
 
@@ -78,10 +79,12 @@ public class MainActivity extends AppCompatActivity {
         testExecute();
         testPreparedInsert();
         testPreparedSelect();
+
+        database.close();
     }
 
     private void testCreate() {
-//        Log.d(TAG, "test create");
+        Log.d(TAG, "test create");
         //Prepare data
         Sample sample = new Sample();
         sample.id = 1;
@@ -91,12 +94,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testQuery() {
-//        Log.d(TAG, "test query");
+        Log.d(TAG, "test query");
         List<Sample> samples = database.getAllObjects(DBSample.allFields(), "sampleTable");
     }
 
     private void testUpdate() {
-//        Log.d(TAG, "test update");
+        Log.d(TAG, "test update");
         //Prepare data
         Sample sample = new Sample();
         sample.content = "sample_update";
@@ -106,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testExecute() {
-//        Log.d(TAG, "test execute");
+        Log.d(TAG, "test execute");
         //Java
         Select<Sample> select = database.<Sample>prepareSelect().select(DBSample.allFields()).from("sampleTable");
         List<Sample> objects = select.where(DBSample.id.gt(1)).limit(10).allObjects();
@@ -118,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testPreparedInsert() {
-//        Log.d(TAG, "test prepared insert");
+        Log.d(TAG, "test prepared insert");
         // 获取handle和建表
         Handle handle = database.getHandle();
 
@@ -156,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testPreparedSelect() {
-//        Log.d(TAG, "test prepared select");
+        Log.d(TAG, "test prepared select");
         // 获取handle和建表
         Handle handle = database.getHandle();
 

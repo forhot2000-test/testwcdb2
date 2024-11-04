@@ -24,6 +24,8 @@ static int (*ori_xhook_sqlite3_open_v2)(const char *filename, void **db, int fla
 static int (*ori_xhook_sqlite3_exec)(void *db, const char *sql, void *callback, void *,
                                      char **errmsg) = nullptr;
 
+static int (*ori_xhook_sqlite3_step)(void *stmt) = nullptr;
+
 
 static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
     BYTEHOOK_STACK_SCOPE();
@@ -40,10 +42,19 @@ static int hook_sqlite3_open_v2_2(const char *filename, void **db, int flags, co
 
 static int
 hook_sqlite3_exec_2(void *db, const char *sql, void *callback, void *data, char **errmsg) {
-    ALOGD("hook_exec: sql=%s, ptr=%p", sql, ori_xhook_sqlite3_exec);
-    int res = ori_xhook_sqlite3_exec(db, sql, callback, data, errmsg);
     const char *filename = x_sqlite3_db_filename(db, "main");
-    ALOGD("hook_exec: filename=%s", filename);
+    ALOGD("hook_exec: sql=%s, filename=%s, ptr=%p", sql, filename, ori_xhook_sqlite3_exec);
+    int res = ori_xhook_sqlite3_exec(db, sql, callback, data, errmsg);
+    return res;
+}
+
+static int
+hook_sqlite3_step_2(void *stmt) {
+    void *db = x_sqlite3_db_handle(stmt);
+    const char *sql = x_sqlite3_expanded_sql(stmt);
+    const char *filename = x_sqlite3_db_filename(db, "main");
+    ALOGD("hook_step: sql=%s, filename=%s, ptr=%p", sql, filename, ori_xhook_sqlite3_exec);
+    int res = ori_xhook_sqlite3_step(stmt);
     return res;
 }
 
@@ -87,10 +98,14 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
     xhook_register("/data/.*\\.so$", "sqlite3_exec",
                    reinterpret_cast<void *>(hook_sqlite3_exec_2),
                    reinterpret_cast<void **>(&ori_xhook_sqlite3_exec));
+    xhook_register("/data/.*\\.so$", "sqlite3_step",
+                   reinterpret_cast<void *>(hook_sqlite3_step_2),
+                   reinterpret_cast<void **>(&ori_xhook_sqlite3_step));
 
     xhook_refresh(1);
     ALOGD("xhook open_v2: %p", ori_xhook_sqlite3_open_v2);
     ALOGD("xhook exec: %p", ori_xhook_sqlite3_exec);
+    ALOGD("xhook step: %p", ori_xhook_sqlite3_step);
 
 //    int result;
 //
