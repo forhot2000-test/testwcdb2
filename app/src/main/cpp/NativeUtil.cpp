@@ -72,6 +72,7 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 //    xhook_refresh(1);
 //    ALOGD("xhook: %p", ori_xhook_sqlite3_open_v2);
 
+    ALOGD("dlopen libWCDB.so");
     load_lib_wcdb();
 }
 
