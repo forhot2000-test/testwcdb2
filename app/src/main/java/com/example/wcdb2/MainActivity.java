@@ -49,12 +49,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onBtn1Click(View view) {
-        Log.v(TAG, "btn1 clicked");
+        Log.d(TAG, "btn1 clicked");
         nativeTestWcdb();
     }
 
     private void onBtn2Click(View view) {
-        Log.v(TAG, "btn2 clicked");
+        Log.d(TAG, "btn2 clicked");
         testWcdb();
     }
 
@@ -65,9 +65,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testWcdb() {
-        Log.d(TAG, "test wcdb2");
+//        Log.d(TAG, "test wcdb2");
         File file = getBaseContext().getDatabasePath("sample.db");
-        Log.d(TAG, file.getPath());
+//        Log.d(TAG, file.getPath());
         database = new Database(file.getPath());
 
         database.createTable("sampleTable", DBSample.INSTANCE);
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testCreate() {
-        Log.d(TAG, "test create");
+//        Log.d(TAG, "test create");
         //Prepare data
         Sample sample = new Sample();
         sample.id = 1;
@@ -91,12 +91,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testQuery() {
-        Log.d(TAG, "test query");
+//        Log.d(TAG, "test query");
         List<Sample> samples = database.getAllObjects(DBSample.allFields(), "sampleTable");
     }
 
     private void testUpdate() {
-        Log.d(TAG, "test update");
+//        Log.d(TAG, "test update");
         //Prepare data
         Sample sample = new Sample();
         sample.content = "sample_update";
@@ -106,19 +106,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testExecute() {
-        Log.d(TAG, "test execute");
+//        Log.d(TAG, "test execute");
         //Java
         Select<Sample> select = database.<Sample>prepareSelect().select(DBSample.allFields()).from("sampleTable");
         List<Sample> objects = select.where(DBSample.id.gt(1)).limit(10).allObjects();
-        Log.v(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
+//        Log.v(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
 
         Delete delete = database.prepareDelete().fromTable("sampleTable").where(DBSample.id.notEq(0));
         delete.execute();
-        Log.v(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
+//        Log.v(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
     }
 
     private void testPreparedInsert() {
-        Log.d(TAG, "test prepared insert");
+//        Log.d(TAG, "test prepared insert");
         // 获取handle和建表
         Handle handle = database.getHandle();
 
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
             insertStatement.step();
 
-            Log.v(TAG, "inserted " + object.content);
+//            Log.v(TAG, "inserted " + object.content);
         }
 
         //一个statement用完之后需要调用finalizeStatement，底下会调用sqlite3_finalize函数
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testPreparedSelect() {
-        Log.d(TAG, "test prepared select");
+//        Log.d(TAG, "test prepared select");
         // 获取handle和建表
         Handle handle = database.getHandle();
 
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 //            object.id = selectStatement.getInt(0);
 //            object.content = selectStatement.getText(1);
 
-            Log.v(TAG, "select " + object.content);
+//            Log.v(TAG, "select " + object.content);
 
             objects.add(object);
 
