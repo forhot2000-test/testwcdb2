@@ -11,5 +11,7 @@ public class NativeUtil {
         }
     }
 
+    public native static void nativeInit();
+
     public native static void nativeTestWcdb(String file);
 }

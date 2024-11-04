@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
 
+        NativeUtil.nativeInit();
+
 //        if (socketServerThread == null) {
 //            Log.d(TAG, "start socket service");
 //            socketServerThread = new DaemonSocketServerThread();
@@ -47,12 +49,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onBtn1Click(View view) {
-        Log.d(TAG, "btn1 clicked");
+        Log.v(TAG, "btn1 clicked");
         nativeTestWcdb();
     }
 
     private void onBtn2Click(View view) {
-        Log.d(TAG, "btn1 clicked");
+        Log.v(TAG, "btn2 clicked");
         testWcdb();
     }
 
@@ -108,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
         //Java
         Select<Sample> select = database.<Sample>prepareSelect().select(DBSample.allFields()).from("sampleTable");
         List<Sample> objects = select.where(DBSample.id.gt(1)).limit(10).allObjects();
-        Log.d(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
+        Log.v(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
 
         Delete delete = database.prepareDelete().fromTable("sampleTable").where(DBSample.id.notEq(0));
         delete.execute();
-        Log.d(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
+        Log.v(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
     }
 
     private void testPreparedInsert() {
@@ -143,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
             insertStatement.step();
 
-            Log.d(TAG, "inserted " + object.content);
+            Log.v(TAG, "inserted " + object.content);
         }
 
         //一个statement用完之后需要调用finalizeStatement，底下会调用sqlite3_finalize函数
@@ -172,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 //            object.id = selectStatement.getInt(0);
 //            object.content = selectStatement.getText(1);
 
-            Log.d(TAG, "select " + object.content);
+            Log.v(TAG, "select " + object.content);
 
             objects.add(object);
 

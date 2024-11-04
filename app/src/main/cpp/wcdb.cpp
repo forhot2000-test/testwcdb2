@@ -4,13 +4,12 @@
 #include <jni.h>
 #include <string>
 #include <future>
+#include <xhook.h>
 
 #include "wcdb.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat"
-
-using std::string;
 
 #define TAG "wcdb.cpp"
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, ##__VA_ARGS__)
@@ -74,7 +73,7 @@ int load_lib_wcdb() {
         ALOGD("ns2=%s, compare_result=%d", ns2.c_str(), ns2.compare("libwcdb.so"));
     }
 
-    void *handle = dlopen("libWCDB.so", RTLD_LAZY);
+    void *handle = dlopen("libWCDB.so", RTLD_NOW);
 
     if (!handle) {
         return LIB_LOAD_FAILED;
@@ -100,6 +99,7 @@ int load_lib_wcdb() {
 }
 
 int x_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
+    // ALOGD("open_v2: %s", filename);
     return ori_sqlite3_open_v2(filename, db, flags, zVfs);
 }
 
@@ -149,19 +149,19 @@ void x_sqlite3_free(void *ptr) {
 }
 
 
-static void
-(*ori_nativeExecute)(JNIEnv *env, jclass clazz, jlong connectionPtr, jlong statementPtr);
-
-static void k_nativeExecute(JNIEnv *env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
-    ori_nativeExecute(env, clazz, connectionPtr, statementPtr);
-    void *stmt = (void *) ((intptr_t) statementPtr);
-    void *db = x_sqlite3_db_handle(stmt);
-    const char *sql = x_sqlite3_expanded_sql(stmt);
-    const char *filename = x_sqlite3_db_filename(db, "main");
-    ALOGV("[wcdb] handle exec sql: %s (filename=%s)", sql, filename);
-    /*onExecSql(env, sql, filename);*/
-    /*ALOGV("[wcdb] nativeExecute end");*/
-}
+//static void
+//(*ori_nativeExecute)(JNIEnv *env, jclass clazz, jlong connectionPtr, jlong statementPtr);
+//
+//static void k_nativeExecute(JNIEnv *env, jclass clazz, jlong connectionPtr, jlong statementPtr) {
+//    ori_nativeExecute(env, clazz, connectionPtr, statementPtr);
+//    void *stmt = (void *) ((intptr_t) statementPtr);
+//    void *db = x_sqlite3_db_handle(stmt);
+//    const char *sql = x_sqlite3_expanded_sql(stmt);
+//    const char *filename = x_sqlite3_db_filename(db, "main");
+//    ALOGV("[wcdb] handle exec sql: %s (filename=%s)", sql, filename);
+//    /*onExecSql(env, sql, filename);*/
+//    /*ALOGV("[wcdb] nativeExecute end");*/
+//}
 
 
 static const char *OP_INSERT_OR_REPLACE = "insert/replace";
