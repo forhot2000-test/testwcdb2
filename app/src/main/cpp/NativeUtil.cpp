@@ -13,42 +13,47 @@
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, ##__VA_ARGS__)
 
 
-JavaVM *gvm;
+static JavaVM *gvm;
+
+static const char *OP_INSERT_OR_REPLACE = "insert/replace";
+static const char *OP_UPDATE = "update";
+static const char *OP_DELETE = "delete";
+
+static void wcdbUpdateHookCallback(void *ud, int op, const char *dbName, const char *tableName,
+                                   int64_t rowid);
+
+static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName);
+
+static int (*ori_sqlite3_open_v2)(const char *filename, void **db, int flags,
+                                  const char *zVfs) = nullptr;
+
+static int (*ori_sqlite3_exec)(void *db, const char *sql, void *callback, void *,
+                               char **errmsg) = nullptr;
+
+static int (*ori_sqlite3_step)(void *stmt) = nullptr;
 
 
-static int (*ori_xhook_sqlite3_open_v2)(const char *filename, void **db, int flags,
-                                        const char *zVfs) = nullptr;
-
-static int (*ori_xhook_sqlite3_exec)(void *db, const char *sql, void *callback, void *,
-                                     char **errmsg) = nullptr;
-
-static int (*ori_xhook_sqlite3_step)(void *stmt) = nullptr;
-
-
-static int hook_sqlite3_open_v2_2(const char *filename, void **db, int flags, const char *zVfs) {
-    ALOGD("hook_open_v2: filename=%s, ptr=%p", filename, ori_xhook_sqlite3_open_v2);
-    int res = ori_xhook_sqlite3_open_v2(filename, db, flags, zVfs);
-    return res;
+static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
+    ALOGD("hook_open_v2: filename=%s, ptr=%p", filename, ori_sqlite3_open_v2);
+    return ori_sqlite3_open_v2(filename, db, flags, zVfs);
 }
 
-static int hook_sqlite3_exec_2(void *db, const char *sql, void *callback, void *data,
-                               char **errmsg) {
-    const char *filename = x_sqlite3_db_filename(db, "main");
-    ALOGD("hook_exec: sql=%s, filename=%s, ptr=%p", sql, filename, ori_xhook_sqlite3_exec);
-    int res = ori_xhook_sqlite3_exec(db, sql, callback, data, errmsg);
-    return res;
+static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *data,
+                             char **errmsg) {
+    const char *filename = p_sqlite3_db_filename(db, "main");
+    ALOGD("hook_exec: sql=%s, filename=%s, ptr=%p", sql, filename, ori_sqlite3_exec);
+    return ori_sqlite3_exec(db, sql, callback, data, errmsg);
 }
 
-static std::string s_MicroMsg("/com.tencent.mm/MicroMsg/");
-static std::string s_EnMicroMsgDb("/EnMicroMsg.db");
-static std::string s_WxFileIndexDb("/WxFileIndex.db");
+static int hook_sqlite3_step(void *stmt) {
+    static std::string s_MicroMsg("/com.tencent.mm/MicroMsg/");
+    static std::string s_EnMicroMsgDb("/EnMicroMsg.db");
+    static std::string s_WxFileIndexDb("/WxFileIndex.db");
+    static std::string s_LastAuthUin;
 
-static std::string s_LastAuthUin;
-
-static int hook_sqlite3_step_2(void *stmt) {
-    void *db = x_sqlite3_db_handle(stmt);
-    const char *sql = x_sqlite3_expanded_sql(stmt);
-    const char *filename = x_sqlite3_db_filename(db, "main");
+    void *db = p_sqlite3_db_handle(stmt);
+    const char *sql = p_sqlite3_expanded_sql(stmt);
+    const char *filename = p_sqlite3_db_filename(db, "main");
 
     if (sql) {
         std::string s_sql(sql);
@@ -65,33 +70,55 @@ static int hook_sqlite3_step_2(void *stmt) {
         ALOGD("hook_step: \n%s", msg.c_str());
     }
 
-    int res = ori_xhook_sqlite3_step(stmt);
-    return res;
+    return ori_sqlite3_step(stmt);
 }
+
+
+static void wcdbUpdateHookCallback(void *ud, int op, const char *dbName, const char *tableName,
+                                   int64_t rowid) {
+    char *data = (char *) ud;
+    const char *opName = nullptr;
+    switch (op) {
+        case SQLITE_INSERT:
+            // insert or replace
+            opName = OP_INSERT_OR_REPLACE;
+            break;
+        case SQLITE_UPDATE:
+            opName = OP_UPDATE;
+            break;
+        case SQLITE_DELETE:
+            opName = OP_DELETE;
+            break;
+    }
+    ALOGD ("update hook: op=%s db=%s table=%s rowid=%d data=%s",
+           opName, dbName, tableName, rowid, data);
+}
+
+static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName) {
+    ALOGD ("exec callback: %s", data);
+    return 0;
+}
+
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 
     ALOGD("dlopen libWCDB.so");
-    load_lib_wcdb();
+    load_libwcdb();
 
     xhook_clear();
     xhook_enable_debug(1);
 //    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
-//                   reinterpret_cast<void *>(hook_sqlite3_open_v2_2),
-//                   reinterpret_cast<void **>(&ori_xhook_sqlite3_open_v2));
+//                   reinterpret_cast<void *>(hook_sqlite3_open_v2),
+//                   reinterpret_cast<void **>(&ori_sqlite3_open_v2));
 //    xhook_register("/data/.*\\.so$", "sqlite3_exec",
-//                   reinterpret_cast<void *>(hook_sqlite3_exec_2),
-//                   reinterpret_cast<void **>(&ori_xhook_sqlite3_exec));
+//                   reinterpret_cast<void *>(hook_sqlite3_exec),
+//                   reinterpret_cast<void **>(&ori_sqlite3_exec));
     xhook_register("/data/.*\\.so$", "sqlite3_step",
-                   reinterpret_cast<void *>(hook_sqlite3_step_2),
-                   reinterpret_cast<void **>(&ori_xhook_sqlite3_step));
+                   reinterpret_cast<void *>(hook_sqlite3_step),
+                   reinterpret_cast<void **>(&ori_sqlite3_step));
 
     xhook_refresh(1);
-    ALOGD("xhook open_v2: %p", ori_xhook_sqlite3_open_v2);
-    ALOGD("xhook exec: %p", ori_xhook_sqlite3_exec);
-    ALOGD("xhook step: %p", ori_xhook_sqlite3_step);
-
 }
 
 extern "C" JNIEXPORT void JNICALL
