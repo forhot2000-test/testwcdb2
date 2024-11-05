@@ -14,7 +14,6 @@ import com.tencent.wcdb.core.PreparedStatement;
 import com.tencent.wcdb.winq.StatementInsert;
 import com.tencent.wcdb.winq.StatementSelect;
 
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,6 @@ public class MainActivity extends AppCompatActivity {
     private Database database;
     private Button btn1;
     private Button btn2;
-    private DaemonSocketServerThread socketServerThread;
     private String path;
 
     @Override
@@ -39,14 +37,6 @@ public class MainActivity extends AppCompatActivity {
         btn2.setText("test wcdb2");
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
-
-        NativeUtil.nativeInit();
-
-//        if (socketServerThread == null) {
-//            Log.d(TAG, "start socket service");
-//            socketServerThread = new DaemonSocketServerThread();
-//            socketServerThread.start();
-//        }
     }
 
     private void onBtn1Click(View view) {
