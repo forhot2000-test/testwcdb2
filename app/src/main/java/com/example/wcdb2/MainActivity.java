@@ -2,6 +2,7 @@ package com.example.wcdb2;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,10 +23,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
 
+    private String path;
     private Database database;
     private Button btn1;
     private Button btn2;
-    private String path;
+    private Button btn3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +35,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         btn1 = findViewById(R.id.btn1);
         btn2 = findViewById(R.id.btn2);
+        btn3 = findViewById(R.id.btn3);
         btn1.setText("test wcdb1");
         btn2.setText("test wcdb2");
+        btn3.setText("test wcdb3");
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
+        btn3.setOnClickListener(this::onBtn3Click);
     }
 
     private void onBtn1Click(View view) {
@@ -48,6 +53,53 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "btn2 clicked");
         testWcdb();
     }
+
+    private void onBtn3Click(View view) {
+        String[] messages = {
+                "1:123456",
+                "1:",
+                "2:xxx.db:select * from t",
+                "2:xxx.db:",
+                "2:",
+                "3:xxx",
+                "",
+        };
+
+        for (String msg : messages) {
+            if (TextUtils.isEmpty(msg)) {
+                Log.d(TAG, "(empty string)");
+            } else if (msg.startsWith("1:")) {
+                String auth_uin = msg.substring(2);
+                Log.d(TAG, String.format("%s: %s", "set_auth_uin", auth_uin));
+            } else if (msg.startsWith("2:")) {
+                String value = msg.substring(2);
+                Log.d(TAG, String.format("%s: %s", "send_message", value));
+            } else {
+                Log.d(TAG, String.format("%s: %s", "unknown", msg));
+            }
+        }
+
+    }
+
+//    private String[] parseMessage(String message, int size) {
+//        String[] array = new String[size];
+//        int length = message.length();
+//        int start = 0;
+//        for (int i = 0; i < size; i++) {
+//            if (i == size - 1) {
+//                array[i] = message.substring(start);
+//            } else {
+//                for (int j = start; j < length; j++) {
+//                    if (message.charAt(j) == ':') {
+//                        array[i] = message.substring(start, j);
+//                        start = j + 1;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//        return array;
+//    }
 
     private void nativeTestWcdb() {
         String dir = getFilesDir().getAbsolutePath();
