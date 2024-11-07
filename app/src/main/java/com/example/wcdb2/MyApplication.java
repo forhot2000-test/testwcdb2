@@ -13,8 +13,8 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        Log.d(TAG, "nativeInit");
-        NativeUtil.nativeInit();
+//        Log.d(TAG, "nativeInit");
+//        NativeUtil.nativeInit();
 
 //        Log.d(TAG, "start socket service");
 //        socketServerThread = new DaemonSocketServerThread();

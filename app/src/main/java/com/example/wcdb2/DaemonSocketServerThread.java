@@ -55,11 +55,19 @@ public class DaemonSocketServerThread extends Thread {
             }
             case ACTION_WRITE_MESSAGE: {
                 String msg = readString(in);
-                if (!TextUtils.isEmpty(msg)) {
-                    Log.i(TAG, "Action: get message: " + msg);
+                if (TextUtils.isEmpty(msg)) {
+                    out.writeInt(-1);
+                } else if (msg.startsWith("1:")) {
+                    String auth_uin = msg.substring(2);
+                    Log.d(TAG, String.format("%s: %s", "set_auth_uin", auth_uin));
+                    out.writeInt(0);
+                } else if (msg.startsWith("2:")) {
+                    String value = msg.substring(2);
+                    Log.d(TAG, String.format("%s: %s", "send_message", value));
                     out.writeInt(0);
                 } else {
-                    out.writeInt(-1);
+                    Log.d(TAG, String.format("%s: %s", "unknown", msg));
+                    out.writeInt(0);
                 }
                 break;
             }
