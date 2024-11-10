@@ -171,24 +171,27 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
     ALOGD("dlopen libWCDB.so");
     dlopen("libWCDB.so", RTLD_NOW);
 
+    ALOGD("dlopen libWCDB_legacy.so");
+    dlopen("libWCDB_legacy.so", RTLD_NOW);
+
     xhook_clear();
     xhook_enable_debug(1);
-    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_open_v2",
                    reinterpret_cast<void *>(hook_sqlite3_open_v2),
                    reinterpret_cast<void **>(&ori_sqlite3_open_v2));
-    xhook_register("/data/.*\\.so$", "sqlite3_exec",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_exec",
                    reinterpret_cast<void *>(hook_sqlite3_exec),
                    reinterpret_cast<void **>(&ori_sqlite3_exec));
-    xhook_register("/data/.*\\.so$", "sqlite3_step",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_step",
                    reinterpret_cast<void *>(hook_sqlite3_step),
                    reinterpret_cast<void **>(&ori_sqlite3_step));
-    xhook_register("/data/.*\\.so$", "sqlite3_expanded_sql",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_expanded_sql",
                    reinterpret_cast<void *>(hook_sqlite3_expanded_sql),
                    reinterpret_cast<void **>(&ori_sqlite3_expanded_sql));
-    xhook_register("/data/.*\\.so$", "sqlite3_db_filename",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_db_filename",
                    reinterpret_cast<void *>(hook_sqlite3_db_filename),
                    reinterpret_cast<void **>(&ori_sqlite3_db_filename));
-    xhook_register("/data/.*\\.so$", "sqlite3_db_handle",
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_db_handle",
                    reinterpret_cast<void *>(hook_sqlite3_db_handle),
                    reinterpret_cast<void **>(&ori_sqlite3_db_handle));
 
