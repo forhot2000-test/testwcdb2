@@ -45,8 +45,8 @@ static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *da
     return ori_sqlite3_exec(db, sql, callback, data, errmsg);
 }
 
-static std::string s_MicroMsg("/com.example.wcdb2/");
-static std::string s_EnMicroMsgDb("/sample.db");
+static std::string s_MicroMsg("/com.tencent.mm/MicroMsg/");
+static std::string s_EnMicroMsgDb("/EnMicroMsg.db");
 static std::string s_WxFileIndexDb("/WxFileIndex.db");
 static std::string s_LastAuthUin;
 
