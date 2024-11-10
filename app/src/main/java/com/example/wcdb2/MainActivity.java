@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btn1;
     private Button btn2;
     private Button btn3;
+    private DaemonSocketServerThread socketServerThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +45,13 @@ public class MainActivity extends AppCompatActivity {
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
         btn3.setOnClickListener(this::onBtn3Click);
+
+//        Log.d(TAG, "nativeInit");
+//        NativeUtil.nativeInit();
+
+//        Log.d(TAG, "start socket service");
+//        socketServerThread = new DaemonSocketServerThread();
+//        socketServerThread.start();
     }
 
     private void onBtn1Click(View view) {
