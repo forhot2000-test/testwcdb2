@@ -83,12 +83,14 @@ int load_libwcdb() {
         return LIB_LOAD_SUCCESS;
     }
 
-//    std::string ns = "xxx_libWCDB.so";
+//    const char *filename = "xxx_libWCDB_legacy.so";
+//    std::string ns(filename);
+//    std::transform(ns.begin(), ns.end(), ns.begin(), ::tolower);
 //    ALOGD("ns=%s", ns.c_str());
-//    if (ns.length() >= 10) {
-//        std::string ns2 = ns.substr(ns.length() - 10, 10);
-//        std::transform(ns2.begin(), ns2.end(), ns2.begin(), ::tolower);
-//        ALOGD("ns2=%s, compare_result=%d", ns2.c_str(), ns2.compare("libwcdb.so"));
+//    if (ns.length() >= 10 && ns.compare(ns.length() - 10, 10, "libwcdb.so") == 0) {
+//        ALOGD("%s is libwcdb", filename);
+//    } else if (ns.length() >= 17 && ns.compare(ns.length() - 17, 17, "libwcdb_legacy.so") == 0) {
+//        ALOGD("%s is legacy libwcdb", filename);
 //    }
 
     void *handle = dlopen("libWCDB.so", RTLD_NOW);
