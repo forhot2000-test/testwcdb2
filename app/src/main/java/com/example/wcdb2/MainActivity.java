@@ -1,5 +1,6 @@
 package com.example.wcdb2;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private String path;
     private Database database;
@@ -37,9 +38,9 @@ public class MainActivity extends AppCompatActivity {
         btn1 = findViewById(R.id.btn1);
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
-        btn1.setText("test wcdb1");
-        btn2.setText("test wcdb2");
-        btn3.setText("test wcdb3");
+        btn1.setText("call wcdb");
+        btn2.setText("call wcdb (in new thread)");
+        btn3.setText("test parse message");
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
         btn3.setOnClickListener(this::onBtn3Click);
@@ -47,7 +48,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void onBtn1Click(View view) {
         Log.d(TAG, "btn1 clicked");
-        nativeTestWcdb();
+        // nativeTestWcdb();
+        doTestWcdb();
     }
 
     private void onBtn2Click(View view) {
@@ -109,7 +111,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testWcdb() {
-//        Log.d(TAG, "test wcdb2");
+        // Log.d(TAG, "test wcdb2");
+
+        AsyncTask.execute(this::doTestWcdb);
+    }
+
+    private void doTestWcdb() {
+
         File dir = new File(getBaseContext().getDataDir(), "com.tencent.mm/MicroMsg/00000000");
         Log.d(TAG, String.format("dir: %s", dir.getPath()));
         if (!dir.exists()) {
@@ -164,11 +172,11 @@ public class MainActivity extends AppCompatActivity {
         //Java
         Select<Sample> select = database.<Sample>prepareSelect().select(DBSample.allFields()).from("sampleTable");
         List<Sample> objects = select.where(DBSample.id.gt(1)).limit(10).allObjects();
-//        Log.v(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
+        // Log.v(TAG, "selected " + objects.size() + " rows");// 获取该操作删除的行数
 
         Delete delete = database.prepareDelete().fromTable("sampleTable").where(DBSample.id.notEq(0));
         delete.execute();
-//        Log.v(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
+        // Log.v(TAG, "deleted " + delete.getChanges() + " rows");// 获取该操作删除的行数
     }
 
     private void testPreparedInsert() {
@@ -193,13 +201,13 @@ public class MainActivity extends AppCompatActivity {
             object.content = "item " + i;
             insertStatement.bindObject(object, DBSample.allFields());
 
-            //2. 也可以逐个字段bind，更高效一点
-//            insertStatement.bindInteger(i, 1);
-//            insertStatement.bindNull(2);
+            // //2. 也可以逐个字段bind，更高效一点
+            // insertStatement.bindInteger(i, 1);
+            // insertStatement.bindNull(2);
 
             insertStatement.step();
 
-//            Log.v(TAG, "inserted " + object.content);
+            // Log.v(TAG, "inserted " + object.content);
         }
 
         //一个statement用完之后需要调用finalizeStatement，底下会调用sqlite3_finalize函数
@@ -223,12 +231,12 @@ public class MainActivity extends AppCompatActivity {
             //1. 可以直接读取对象，会逐个属性来调用sqlite3_column系列接口来读取数据，并赋值给对象
             Sample object = selectStatement.getOneObject(DBSample.allFields());
 
-            //2. 也可以逐个字段读取，更灵活一点
-//            Sample object = new Sample();
-//            object.id = selectStatement.getInt(0);
-//            object.content = selectStatement.getText(1);
+            // //2. 也可以逐个字段读取，更灵活一点
+            // Sample object = new Sample();
+            // object.id = selectStatement.getInt(0);
+            // object.content = selectStatement.getText(1);
 
-//            Log.v(TAG, "select " + object.content);
+            // Log.v(TAG, "select " + object.content);
 
             objects.add(object);
 
