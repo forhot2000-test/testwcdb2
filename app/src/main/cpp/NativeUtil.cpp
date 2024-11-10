@@ -53,7 +53,7 @@ static std::string s_LastAuthUin;
 static int get_auth_uin(std::string s_filename, std::string &s_auth_uin) {
     int a = s_filename.find(s_MicroMsg);
     if (a < 0) {
-//        ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
+        // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
         return 1;
     }
     a += s_MicroMsg.length();
@@ -63,7 +63,7 @@ static int get_auth_uin(std::string s_filename, std::string &s_auth_uin) {
         b = s_filename.find(s_WxFileIndexDb);
     }
     if (b < 0) {
-//        ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
+        // ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
         return 2;
     }
 
@@ -75,14 +75,14 @@ static int get_auth_uin(std::string s_filename, std::string &s_auth_uin) {
         return 0;
     }
 
-//    ALOGD("[auth_uin] auth_uin is not changed.");
+    // ALOGD("[auth_uin] auth_uin is not changed.");
     return -1;
 }
 
 static int get_relative_filename(std::string s_filename, std::string &s_relative_filename) {
     int a = s_filename.find(s_MicroMsg);
     if (a < 0) {
-//        ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
+        // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
         return 1;
     }
     a += s_MicroMsg.length();
@@ -154,12 +154,12 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 
     xhook_clear();
     xhook_enable_debug(1);
-//    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
-//                   reinterpret_cast<void *>(hook_sqlite3_open_v2),
-//                   reinterpret_cast<void **>(&ori_sqlite3_open_v2));
-//    xhook_register("/data/.*\\.so$", "sqlite3_exec",
-//                   reinterpret_cast<void *>(hook_sqlite3_exec),
-//                   reinterpret_cast<void **>(&ori_sqlite3_exec));
+    xhook_register("/data/.*\\.so$", "sqlite3_open_v2",
+                   reinterpret_cast<void *>(hook_sqlite3_open_v2),
+                   reinterpret_cast<void **>(&ori_sqlite3_open_v2));
+    xhook_register("/data/.*\\.so$", "sqlite3_exec",
+                   reinterpret_cast<void *>(hook_sqlite3_exec),
+                   reinterpret_cast<void **>(&ori_sqlite3_exec));
     xhook_register("/data/.*\\.so$", "sqlite3_step",
                    reinterpret_cast<void *>(hook_sqlite3_step),
                    reinterpret_cast<void **>(&ori_sqlite3_step));
