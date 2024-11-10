@@ -185,52 +185,52 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //    void *stmt;
 //
 //    ALOGD("filename: %s", filename);
-//    result = x_sqlite3_open_v2(filename, &db, flags, NULL);
+//    result = p_sqlite3_open_v2(filename, &db, flags, NULL);
 //    if (result != SQLITE_OK) {
-//        const char *err = x_sqlite3_errmsg(db);
+//        const char *err = p_sqlite3_errmsg(db);
 //        ALOGE("open db failed: (%d) %s", result, err);
 //    }
 //
 //    if (result == SQLITE_OK) {
-//        const char *n = x_sqlite3_db_filename(db, "main");
+//        const char *n = p_sqlite3_db_filename(db, "main");
 //        ALOGD("get db filename: %s", n);
 //    }
 //
 //
 //    // ERROR: bind update hook callback error
 //    // if (result == SQLITE_OK) {
-//    //     x_sqlite3_update_hook(db, wcdbUpdateHookCallback, (void *) filename);
+//    //     p_sqlite3_update_hook(db, wcdbUpdateHookCallback, (void *) filename);
 //    // }
 //
 //    if (result == SQLITE_OK) {
-//        // x_sqlite3_trace(db, 0xffff, callback, ctx);
+//        // p_sqlite3_trace(db, 0xffff, callback, ctx);
 //    }
 //
 //
 //    if (result == SQLITE_OK) {
-//        result = x_sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+//        result = p_sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 //        if (result != SQLITE_OK) {
-//            const char *err = x_sqlite3_errmsg(db);
+//            const char *err = p_sqlite3_errmsg(db);
 //            ALOGE("prepare statement failed: (%d) %s", result, err);
 //        }
 //    }
 //
 //    if (result == SQLITE_OK) {
-//        result = x_sqlite3_bind_int(stmt, 1, 10);
+//        result = p_sqlite3_bind_int(stmt, 1, 10);
 //        if (result != SQLITE_OK) {
-//            const char *err = x_sqlite3_errmsg(db);
+//            const char *err = p_sqlite3_errmsg(db);
 //            ALOGE("bind parameter failed: (%d) %s", result, err);
 //        }
 //    }
 //
 //    if (result == SQLITE_OK) {
 //        const char *s;
-//        s = x_sqlite3_sql(stmt);
+//        s = p_sqlite3_sql(stmt);
 //        ALOGD("sql: %s", s);
-//        s = x_sqlite3_expanded_sql(stmt);
+//        s = p_sqlite3_expanded_sql(stmt);
 //        ALOGD("expanded sql: %s", s);
-//        void *db = x_sqlite3_db_handle(stmt);
-//        s = x_sqlite3_db_filename(db, "main");
+//        void *db = p_sqlite3_db_handle(stmt);
+//        s = p_sqlite3_db_filename(db, "main");
 //        ALOGD("filename from stmt: %s", s);
 //    }
 //
@@ -239,10 +239,10 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //        ALOGD("start exec select 1");
 //        const char *sql = "select 1";
 //        char *err;
-//        result = x_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+//        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
 //        if (result != SQLITE_OK) {
 //            ALOGE("exec select 1 failed: (%d) %s", result, err);
-//            x_sqlite3_free(err);
+//            p_sqlite3_free(err);
 //        } else {
 //            ALOGD("exec select 1 success");
 //        }
@@ -252,10 +252,10 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //        ALOGD("start create table test1");
 //        const char *sql = "create table if not exists test1 (value text)";
 //        char *err;
-//        result = x_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+//        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
 //        if (result != SQLITE_OK) {
 //            ALOGE("create table test1 failed: (%d) %s", result, err);
-//            x_sqlite3_free(err);
+//            p_sqlite3_free(err);
 //        } else {
 //            ALOGD("create table test1 success");
 //        }
@@ -266,10 +266,10 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //    //     ALOGD("start show tables");
 //    //     const char *sql = ".tables";
 //    //     char *err;
-//    //     result = x_sqlite3_exec(db, sql, wcdbExecCallback, (void *) sql, &err);
+//    //     result = p_sqlite3_exec(db, sql, wcdbExecCallback, (void *) sql, &err);
 //    //     if (result != SQLITE_OK) {
 //    //         ALOGE("show tables failed: (%d) %s", result, err);
-//    //         x_sqlite3_free(err);
+//    //         p_sqlite3_free(err);
 //    //     } else {
 //    //         ALOGD("show tables success");
 //    //     }
@@ -280,10 +280,10 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
 //            ALOGD("start insert into test1");
 //            const char *sql = "insert into test1 (value) values ('hello, world!')";
 //            char *err;
-//            result = x_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+//            result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
 //            if (result != SQLITE_OK) {
 //                ALOGE("insert into test1 failed: (%d) %s", result, err);
-//                x_sqlite3_free(err);
+//                p_sqlite3_free(err);
 //            } else {
 //                ALOGD("insert into test1 success");
 //            }
