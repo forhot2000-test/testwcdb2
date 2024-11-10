@@ -27,6 +27,8 @@ int (*p_sqlite3_prepare_v2)(void *db, const char *sql, int n, void **stmt, const
 
 int (*p_sqlite3_exec)(void *, const char *sql, void *callback, void *, char **errmsg);
 
+int (*p_sqlite3_step)(void *);
+
 const char *(*p_sqlite3_sql)(void *stmt);
 
 const char *(*p_sqlite3_expanded_sql)(void *stmt);
@@ -101,6 +103,7 @@ int load_libwcdb() {
     x_register(handle, "sqlite3_expanded_sql", reinterpret_cast<void **>(&p_sqlite3_expanded_sql));
     x_register(handle, "sqlite3_prepare_v2", reinterpret_cast<void **>(&p_sqlite3_prepare_v2));
     x_register(handle, "sqlite3_exec", reinterpret_cast<void **>(&p_sqlite3_exec));
+    x_register(handle, "sqlite3_step", reinterpret_cast<void **>(&p_sqlite3_step));
     x_register(handle, "sqlite3_errmsg", reinterpret_cast<void **>(&p_sqlite3_errmsg));
     x_register(handle, "sqlite3_bind_int", reinterpret_cast<void **>(&p_sqlite3_bind_int));
     x_register(handle, "sqlite3_db_filename", reinterpret_cast<void **>(&p_sqlite3_db_filename));

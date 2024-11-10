@@ -27,6 +27,8 @@ extern int (*p_sqlite3_prepare_v2)(void *db, const char *sql, int n, void **stmt
 
 extern int (*p_sqlite3_exec)(void *, const char *sql, void *callback, void *, char **errmsg);
 
+extern int(*p_sqlite3_step)(void *);
+
 extern const char *(*p_sqlite3_sql)(void *stmt);
 
 extern const char *(*p_sqlite3_expanded_sql)(void *stmt);

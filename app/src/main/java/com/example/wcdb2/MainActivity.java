@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btn1;
     private Button btn2;
     private Button btn3;
+    private Button btn4;
     private DaemonSocketServerThread socketServerThread;
 
     @Override
@@ -39,15 +40,20 @@ public class MainActivity extends AppCompatActivity {
         btn1 = findViewById(R.id.btn1);
         btn2 = findViewById(R.id.btn2);
         btn3 = findViewById(R.id.btn3);
+        btn4 = findViewById(R.id.btn4);
+
         btn1.setText("call wcdb");
         btn2.setText("call wcdb (in new thread)");
         btn3.setText("test parse message");
+        btn4.setText("test wcdb from c++");
+
         btn1.setOnClickListener(this::onBtn1Click);
         btn2.setOnClickListener(this::onBtn2Click);
         btn3.setOnClickListener(this::onBtn3Click);
+        btn4.setOnClickListener(this::onBtn4Click);
 
-//        Log.d(TAG, "nativeInit");
-//        NativeUtil.nativeInit();
+        Log.d(TAG, "nativeInit");
+        NativeUtil.nativeInit();
 
 //        Log.d(TAG, "start socket service");
 //        socketServerThread = new DaemonSocketServerThread();
@@ -90,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+    }
+
+    private void onBtn4Click(View view) {
+        Log.d(TAG, "btn4 clicked");
+        nativeTestWcdb();
     }
 
     private void nativeTestWcdb() {

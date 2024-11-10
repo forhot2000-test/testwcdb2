@@ -5,6 +5,7 @@
 #include <regex.h>
 #include <android/log.h>
 #include <xhook.h>
+#include <dlfcn.h>
 
 #include "wcdb.h"
 
@@ -32,16 +33,25 @@ static int (*ori_sqlite3_exec)(void *db, const char *sql, void *callback, void *
 
 static int (*ori_sqlite3_step)(void *stmt) = nullptr;
 
+static const char *(*ori_sqlite3_expanded_sql)(void *stmt);
+
+static const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName);
+
+static void *(*ori_sqlite3_db_handle)(void *);
+
 
 static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
-    ALOGD("hook_open_v2: filename=%s, ptr=%p", filename, ori_sqlite3_open_v2);
+    ALOGD("hook_open_v2: filename=%s", filename);
     return ori_sqlite3_open_v2(filename, db, flags, zVfs);
 }
 
 static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *data,
                              char **errmsg) {
-    const char *filename = p_sqlite3_db_filename(db, "main");
-    ALOGD("hook_exec: sql=%s, filename=%s, ptr=%p", sql, filename, ori_sqlite3_exec);
+    if (ori_sqlite3_db_filename) {
+        const char *filename = ori_sqlite3_db_filename(db, "main");
+        ALOGD("hook_exec: sql=%s, filename=%s", sql, filename);
+    }
+
     return ori_sqlite3_exec(db, sql, callback, data, errmsg);
 }
 
@@ -90,11 +100,11 @@ static int get_relative_filename(std::string s_filename, std::string &s_relative
 }
 
 static int hook_sqlite3_step(void *stmt) {
-    if (p_sqlite3_expanded_sql) {
+    if (ori_sqlite3_expanded_sql) {
 
-        void *db = p_sqlite3_db_handle(stmt);
-        const char *sql = p_sqlite3_expanded_sql(stmt);
-        const char *filename = p_sqlite3_db_filename(db, "main");
+        void *db = ori_sqlite3_db_handle(stmt);
+        const char *sql = ori_sqlite3_expanded_sql(stmt);
+        const char *filename = ori_sqlite3_db_filename(db, "main");
 
         if (sql) {
             std::string s_sql(sql);
@@ -116,6 +126,18 @@ static int hook_sqlite3_step(void *stmt) {
     return ori_sqlite3_step(stmt);
 }
 
+static const char *hook_sqlite3_expanded_sql(void *stmt) {
+    return ori_sqlite3_expanded_sql(stmt);
+}
+
+static const char *hook_sqlite3_db_filename(void *db, const char *name) {
+    return ori_sqlite3_db_filename(db, name);
+}
+
+static void *hook_sqlite3_db_handle(void *stmt) {
+    return ori_sqlite3_db_handle(stmt);
+}
+
 
 static void wcdbUpdateHookCallback(void *ud, int op, const char *dbName, const char *tableName,
                                    int64_t rowid) {
@@ -133,12 +155,12 @@ static void wcdbUpdateHookCallback(void *ud, int op, const char *dbName, const c
             opName = OP_DELETE;
             break;
     }
-    ALOGD ("update hook: op=%s db=%s table=%s rowid=%d data=%s",
+    ALOGD ("[native] update hook: op=%s db=%s table=%s rowid=%d data=%s",
            opName, dbName, tableName, rowid, data);
 }
 
 static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName) {
-    ALOGD ("exec callback: %s", data);
+    ALOGD ("[native] exec callback: %s", data);
     return 0;
 }
 
@@ -147,7 +169,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 
     ALOGD("dlopen libWCDB.so");
-    load_libwcdb();
+    dlopen("libWCDB.so", RTLD_NOW);
 
     xhook_clear();
     xhook_enable_debug(1);
@@ -160,6 +182,15 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
     xhook_register("/data/.*\\.so$", "sqlite3_step",
                    reinterpret_cast<void *>(hook_sqlite3_step),
                    reinterpret_cast<void **>(&ori_sqlite3_step));
+    xhook_register("/data/.*\\.so$", "sqlite3_expanded_sql",
+                   reinterpret_cast<void *>(hook_sqlite3_expanded_sql),
+                   reinterpret_cast<void **>(&ori_sqlite3_expanded_sql));
+    xhook_register("/data/.*\\.so$", "sqlite3_db_filename",
+                   reinterpret_cast<void *>(hook_sqlite3_db_filename),
+                   reinterpret_cast<void **>(&ori_sqlite3_db_filename));
+    xhook_register("/data/.*\\.so$", "sqlite3_db_handle",
+                   reinterpret_cast<void *>(hook_sqlite3_db_handle),
+                   reinterpret_cast<void **>(&ori_sqlite3_db_handle));
 
     xhook_refresh(1);
 }
@@ -167,128 +198,142 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
 extern "C" JNIEXPORT void JNICALL
 Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
 
-//    int result;
-//
-//    result = load_lib_wcdb();
-//    if (result != LIB_LOAD_SUCCESS) {
-//        ALOGE("load libWCDB.so failed");
-//        return;
-//    }
+    int result;
 
-//    const char *filename = env->GetStringUTFChars(jfile, NULL);
-//    void *db;
-//    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI;
-//    const char *sql = "select ?";
-//    void *stmt;
-//
-//    ALOGD("filename: %s", filename);
-//    result = p_sqlite3_open_v2(filename, &db, flags, NULL);
-//    if (result != SQLITE_OK) {
-//        const char *err = p_sqlite3_errmsg(db);
-//        ALOGE("open db failed: (%d) %s", result, err);
-//    }
-//
+    result = load_libwcdb();
+    if (result != LIB_LOAD_SUCCESS) {
+        ALOGE("[native] load libWCDB.so failed");
+        return;
+    }
+
+//    ALOGD("[native] sqlite3_open_v: %p, %p, %p",
+//          hook_sqlite3_open_v2, ori_sqlite3_open_v2, p_sqlite3_open_v2);
+//    ALOGD("[native] sqlite3_exec: %p, %p, %p",
+//          hook_sqlite3_exec, ori_sqlite3_exec, p_sqlite3_exec);
+//    ALOGD("[native] sqlite3_step: %p, %p, %p",
+//          hook_sqlite3_step, ori_sqlite3_step, p_sqlite3_step);
+//    ALOGD("[native] sqlite3_expanded_sql: %p, %p, %p",
+//          hook_sqlite3_expanded_sql, ori_sqlite3_expanded_sql, p_sqlite3_expanded_sql);
+//    ALOGD("[native] sqlite3_db_filename: %p, %p, %p",
+//          hook_sqlite3_db_filename, ori_sqlite3_db_filename, p_sqlite3_db_filename);
+//    ALOGD("[native] sqlite3_db_handle: %p, %p, %p",
+//          hook_sqlite3_db_handle, ori_sqlite3_db_handle, p_sqlite3_db_handle);
+
+    const char *filename = env->GetStringUTFChars(jfile, nullptr);
+    void *db;
+    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI;
+
+
+    // ALOGD("[native] filename: %s", filename);
+    result = p_sqlite3_open_v2(filename, &db, flags, nullptr);
+    if (result != SQLITE_OK) {
+        const char *err = p_sqlite3_errmsg(db);
+        ALOGE("[native] open db failed: (%d) %s", result, err);
+    } else {
+        ALOGD("[native] open db success");
+    }
+
 //    if (result == SQLITE_OK) {
 //        const char *n = p_sqlite3_db_filename(db, "main");
-//        ALOGD("get db filename: %s", n);
+//        // ALOGD("[native] get db filename: %s", n);
 //    }
-//
-//
+
+
 //    // ERROR: bind update hook callback error
-//    // if (result == SQLITE_OK) {
-//    //     p_sqlite3_update_hook(db, wcdbUpdateHookCallback, (void *) filename);
-//    // }
-//
+//    if (result == SQLITE_OK) {
+//        p_sqlite3_update_hook(db, wcdbUpdateHookCallback, (void *) filename);
+//    }
+
 //    if (result == SQLITE_OK) {
 //        // p_sqlite3_trace(db, 0xffff, callback, ctx);
 //    }
-//
-//
-//    if (result == SQLITE_OK) {
-//        result = p_sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-//        if (result != SQLITE_OK) {
-//            const char *err = p_sqlite3_errmsg(db);
-//            ALOGE("prepare statement failed: (%d) %s", result, err);
+
+
+    if (result == SQLITE_OK) {
+        ALOGD("[native] start exec select ?");
+        const char *sql = "select ?";
+        void *stmt;
+
+        result = p_sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            const char *err = p_sqlite3_errmsg(db);
+            ALOGE("[native] prepare statement failed: (%d) %s", result, err);
+        }
+
+        if (result == SQLITE_OK) {
+            result = p_sqlite3_bind_int(stmt, 1, 10);
+            if (result != SQLITE_OK) {
+                const char *err = p_sqlite3_errmsg(db);
+                ALOGE("[native] bind parameter failed: (%d) %s", result, err);
+            }
+        }
+
+//        if (result == SQLITE_OK) {
+//            const char *s;
+//            s = p_sqlite3_sql(stmt);
+//            ALOGD("[native] sql: %s", s);
+//            s = p_sqlite3_expanded_sql(stmt);
+//            ALOGD("[native] expanded sql: %s", s);
+//            void *db = p_sqlite3_db_handle(stmt);
+//            s = p_sqlite3_db_filename(db, "main");
+//            ALOGD("[native] filename from stmt: %s", s);
 //        }
-//    }
-//
-//    if (result == SQLITE_OK) {
-//        result = p_sqlite3_bind_int(stmt, 1, 10);
-//        if (result != SQLITE_OK) {
-//            const char *err = p_sqlite3_errmsg(db);
-//            ALOGE("bind parameter failed: (%d) %s", result, err);
-//        }
-//    }
-//
-//    if (result == SQLITE_OK) {
-//        const char *s;
-//        s = p_sqlite3_sql(stmt);
-//        ALOGD("sql: %s", s);
-//        s = p_sqlite3_expanded_sql(stmt);
-//        ALOGD("expanded sql: %s", s);
-//        void *db = p_sqlite3_db_handle(stmt);
-//        s = p_sqlite3_db_filename(db, "main");
-//        ALOGD("filename from stmt: %s", s);
-//    }
-//
-//
-//    if (result == SQLITE_OK) {
-//        ALOGD("start exec select 1");
-//        const char *sql = "select 1";
-//        char *err;
-//        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
-//        if (result != SQLITE_OK) {
-//            ALOGE("exec select 1 failed: (%d) %s", result, err);
-//            p_sqlite3_free(err);
-//        } else {
-//            ALOGD("exec select 1 success");
-//        }
-//    }
-//
-//    if (result == SQLITE_OK) {
-//        ALOGD("start create table test1");
-//        const char *sql = "create table if not exists test1 (value text)";
-//        char *err;
-//        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
-//        if (result != SQLITE_OK) {
-//            ALOGE("create table test1 failed: (%d) %s", result, err);
-//            p_sqlite3_free(err);
-//        } else {
-//            ALOGD("create table test1 success");
-//        }
-//    }
-//
-//    // ERROR: sql error
-//    // if (result == SQLITE_OK) {
-//    //     ALOGD("start show tables");
-//    //     const char *sql = ".tables";
-//    //     char *err;
-//    //     result = p_sqlite3_exec(db, sql, wcdbExecCallback, (void *) sql, &err);
-//    //     if (result != SQLITE_OK) {
-//    //         ALOGE("show tables failed: (%d) %s", result, err);
-//    //         p_sqlite3_free(err);
-//    //     } else {
-//    //         ALOGD("show tables success");
-//    //     }
-//    // }
-//
-//    for (int i = 0; i < 3; ++i) {
-//        if (result == 0) {
-//            ALOGD("start insert into test1");
-//            const char *sql = "insert into test1 (value) values ('hello, world!')";
-//            char *err;
-//            result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
-//            if (result != SQLITE_OK) {
-//                ALOGE("insert into test1 failed: (%d) %s", result, err);
-//                p_sqlite3_free(err);
-//            } else {
-//                ALOGD("insert into test1 success");
-//            }
-//        }
-//    }
-//
-//
-//    env->ReleaseStringUTFChars(jfile, filename);
+    }
+
+
+    if (result == SQLITE_OK) {
+        ALOGD("[native] start exec select 1");
+        const char *sql = "select 1";
+        char *err;
+        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+        if (result != SQLITE_OK) {
+            ALOGE("[native] exec select 1 failed: (%d) %s", result, err);
+            p_sqlite3_free(err);
+        }
+    }
+
+    if (result == SQLITE_OK) {
+        ALOGD("[native] start exec create table test1");
+        const char *sql = "create table if not exists test1 (value text)";
+        char *err;
+        result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+        if (result != SQLITE_OK) {
+            ALOGE("[native] create table test1 failed: (%d) %s", result, err);
+            p_sqlite3_free(err);
+        }
+    }
+
+    // ERROR: sql error
+    // if (result == SQLITE_OK) {
+    //     ALOGD("[native] start show tables");
+    //     const char *sql = ".tables";
+    //     char *err;
+    //     result = p_sqlite3_exec(db, sql, wcdbExecCallback, (void *) sql, &err);
+    //     if (result != SQLITE_OK) {
+    //         ALOGE("[native] show tables failed: (%d) %s", result, err);
+    //         p_sqlite3_free(err);
+    //     } else {
+    //         ALOGD("[native] show tables success");
+    //     }
+    // }
+
+    if (result == SQLITE_OK) {
+        ALOGD("[native] start exec insert into test1");
+        for (int i = 0; i < 3; ++i) {
+            if (result == SQLITE_OK) {
+                const char *sql = "insert into test1 (value) values ('hello, world!')";
+                char *err;
+                result = p_sqlite3_exec(db, sql, (void *) wcdbExecCallback, (void *) sql, &err);
+                if (result != SQLITE_OK) {
+                    ALOGE("[native] insert into test1 failed: (%d) %s", result, err);
+                    p_sqlite3_free(err);
+                }
+            }
+        }
+    }
+
+
+    env->ReleaseStringUTFChars(jfile, filename);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
