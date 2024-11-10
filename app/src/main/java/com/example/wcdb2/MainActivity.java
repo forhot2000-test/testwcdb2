@@ -15,6 +15,7 @@ import com.tencent.wcdb.core.PreparedStatement;
 import com.tencent.wcdb.winq.StatementInsert;
 import com.tencent.wcdb.winq.StatementSelect;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,8 +110,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void testWcdb() {
 //        Log.d(TAG, "test wcdb2");
-        path = getBaseContext().getDatabasePath("sample.db").getPath();
-//        Log.d(TAG, path);
+        File dir = new File(getBaseContext().getDataDir(), "com.tencent.mm/MicroMsg/00000000");
+        Log.d(TAG, String.format("dir: %s", dir.getPath()));
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        File file = new File(dir, "EnMicroMsg.db");
+        Log.d(TAG, String.format("file: %s", file.getPath()));
+
+        path = file.getPath();
         database = new Database(path);
 
         database.createTable("sampleTable", DBSample.INSTANCE);
