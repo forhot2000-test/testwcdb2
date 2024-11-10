@@ -92,26 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    private String[] parseMessage(String message, int size) {
-//        String[] array = new String[size];
-//        int length = message.length();
-//        int start = 0;
-//        for (int i = 0; i < size; i++) {
-//            if (i == size - 1) {
-//                array[i] = message.substring(start);
-//            } else {
-//                for (int j = start; j < length; j++) {
-//                    if (message.charAt(j) == ':') {
-//                        array[i] = message.substring(start, j);
-//                        start = j + 1;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//        return array;
-//    }
-
     private void nativeTestWcdb() {
         String dir = getFilesDir().getAbsolutePath();
         String file = Paths.get(dir, "native.db").toString();
