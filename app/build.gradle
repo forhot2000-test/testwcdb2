@@ -68,5 +68,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation 'dev.rikka.ndk.thirdparty:xhook:1.2.0'
-    implementation 'com.bytedance:bytehook:1.0.10'
 }

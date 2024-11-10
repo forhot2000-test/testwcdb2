@@ -11,7 +11,6 @@ cmake_minimum_required(VERSION 3.18.1)
 project("mywcdb2")
 
 find_package(xhook REQUIRED CONFIG)
-find_package(bytehook REQUIRED CONFIG)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -53,7 +52,6 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
-        bytehook::bytehook
         xhook::xhook
 )
 
