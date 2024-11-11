@@ -21,6 +21,13 @@ find_package(xhook REQUIRED CONFIG)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
+add_library(
+        rakan_socket
+
+        SHARED
+
+        rakan/rirud.cpp)
+
 add_library( # Sets the name of the library.
         mywcdb2
 
@@ -29,8 +36,6 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         NativeUtil.cpp
-
-        rakan/rirud.cpp
 
         # wcdb
         wcdb.cpp)
@@ -55,10 +60,11 @@ find_library( # Sets the name of the path variable.
 target_link_libraries( # Specifies the target library.
         mywcdb2
 
+        rakan_socket
+
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
 
-        xhook::xhook
-)
+        xhook::xhook)
 
