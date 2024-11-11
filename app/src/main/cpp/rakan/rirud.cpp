@@ -21,13 +21,6 @@ bool RakanSocket::Read(std::string &str) const {
     return Read(str.data(), size);
 }
 
-void RakanSocket::WriteMessage(std::string_view path) const {
-    Write(Action::WRITE_MESSAGE);
-    Write(path);
-    // int32_t rirud_errno;
-    // Read(rirud_errno);
-}
-
 RakanSocket::RakanSocket(unsigned retries) {
     if ((fd_ = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0) {
         return;

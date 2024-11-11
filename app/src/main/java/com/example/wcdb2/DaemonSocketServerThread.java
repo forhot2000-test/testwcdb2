@@ -8,7 +8,6 @@ import android.net.LocalSocket;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.EOFException;
@@ -24,9 +23,8 @@ public class DaemonSocketServerThread extends Thread {
 
     private static String TAG = "RakanDaemon";
 
-    private static final int ACTION_READ_MESSAGE = 1;
-    private static final int ACTION_WRITE_MESSAGE = 2;
-    private static final int ACTION_RESERVE = 3;
+    private static final int SET_AUTH_UIN = 1;
+    private static final int SEND_MESSAGE = 2;
 
     private static final Executor EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 4 + 1);
 
@@ -49,35 +47,16 @@ public class DaemonSocketServerThread extends Thread {
         // Log.i(TAG, "Action " + action);
 
         switch (action) {
-            case ACTION_READ_MESSAGE: {
-                Log.i(TAG, "Action: read message");
-                break;
-            }
-            case ACTION_WRITE_MESSAGE: {
+            case SET_AUTH_UIN: {
                 String msg = readString(in);
-                if (TextUtils.isEmpty(msg)) {
-                    // out.writeInt(-1);
-                } else if (msg.startsWith("1:")) {
-                    String auth_uin = msg.substring(2);
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    Log.d(TAG, String.format("%s: %s", "set_auth_uin", auth_uin));
-                    // out.writeInt(0);
-                } else if (msg.startsWith("2:")) {
-                    String value = msg.substring(2);
-                    Log.d(TAG, String.format("%s: %s", "send_message", value));
-                    // out.writeInt(0);
-                } else {
-                    Log.d(TAG, String.format("%s: %s", "unknown", msg));
-                    // out.writeInt(0);
-                }
+                delay();
+                Log.d(TAG, String.format("%s: %s", "set_auth_uin", msg));
                 break;
             }
-            case ACTION_RESERVE: {
-                Log.i(TAG, "Action: reserve");
+            case SEND_MESSAGE: {
+                String msg = readString(in);
+                delay();
+                Log.d(TAG, String.format("%s: %s", "send_message", msg));
                 break;
             }
             default:
@@ -86,6 +65,14 @@ public class DaemonSocketServerThread extends Thread {
         }
 
         // Log.i(TAG, "Handle action " + action + " finished");
+    }
+
+    private void delay() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleSocket(LocalSocket socket) throws IOException {

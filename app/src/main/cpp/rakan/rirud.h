@@ -10,12 +10,6 @@ class RakanSocket {
 public:
     constexpr static std::string_view RIRUD = "rakan";
 
-    enum class Action : uint32_t {
-        READ_MESSAGE = 1,
-        WRITE_MESSAGE = 2,
-        RESERVE = 3,
-    };
-
     enum class CODE : uint8_t {
         OK = 0,
         FAILED = 1,
@@ -42,7 +36,6 @@ public:
     }
 
     bool Write(std::string_view str) const;
-    void WriteMessage(std::string_view path) const;
 
     ~RakanSocket();
 

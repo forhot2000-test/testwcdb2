@@ -53,18 +53,24 @@ static const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName);
 static void *(*ori_sqlite3_db_handle)(void *);
 
 
+enum class Action : uint32_t {
+    SET_AUTH_UIN = 1,
+    SEND_MESSAGE = 2,
+};
+
+
 RakanSocket &getGlobalRakanSocket() {
-    static RakanSocket globalRakanSocket(5);  // 5 是重试次数
+    static RakanSocket socket(5);  // 5 是重试次数
     static std::once_flag initFlag;
 
     std::call_once(initFlag, []() {
-        if (!globalRakanSocket.valid()) {
+        if (!socket.valid()) {
             __android_log_print(ANDROID_LOG_ERROR, "DB_KOO",
                                 "Failed to initialize globalRakanSocket");
         }
     });
 
-    return globalRakanSocket;
+    return socket;
 }
 
 static int get_auth_uin(std::string s_filename) {
@@ -363,11 +369,15 @@ extern "C" JNIEXPORT void JNICALL nativeTestSocket(JNIEnv *env, jclass clazz) {
     RakanSocket &socket = getGlobalRakanSocket();
     if (socket.valid()) {
         std::string s_auth_uin = "xxxxxx";
+        ALOGD("set auth_uin: %s", s_auth_uin.c_str());
+        socket.Write(Action::SET_AUTH_UIN);
+        socket.Write(s_auth_uin);
 
         for (int i = 0; i < 10; ++i) {
-            std::string msg = "1:" + s_auth_uin + "_" + std::to_string(i);
-            ALOGD("write message: %s", msg.c_str());
-            socket.WriteMessage(msg);
+            std::string msg = "message_" + std::to_string(i);
+            ALOGD("send message: %s", msg.c_str());
+            socket.Write(Action::SEND_MESSAGE);
+            socket.Write(msg);
         }
     }
 }
