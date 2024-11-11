@@ -6,7 +6,7 @@
 #include <future>
 #include <xhook.h>
 
-#include "wcdb.h"
+#include "sqlite_apis.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat"
