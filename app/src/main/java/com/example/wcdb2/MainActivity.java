@@ -68,10 +68,24 @@ public class MainActivity extends AppCompatActivity {
             testWcdbLegacy();
         });
 
+        Button btn6 = findViewById(R.id.btn6);
+        btn6.setText("test socket from c++");
+        btn6.setOnClickListener(view -> {
+            Log.d(TAG, "btn6 clicked");
+            nativeTestSocket();
+        });
+
+        Button btn7 = findViewById(R.id.btn7);
+        btn7.setText("test c++ string compare");
+        btn7.setOnClickListener(view -> {
+            Log.d(TAG, "btn7 clicked");
+            nativeTestStringCompare();
+        });
+
         Log.d(TAG, "nativeInit");
         NativeUtil.nativeInit();
 
-        // startSocketServer();
+        startSocketServer();
     }
 
     private void startSocketServer() {
@@ -264,5 +278,13 @@ public class MainActivity extends AppCompatActivity {
         db.execSQL("select 2");
         db.execSQL("insert into sampleTable(id, content) values(1, 'item 1')");
         db.close();
+    }
+
+    private void nativeTestSocket() {
+        NativeUtil.nativeTestSocket();
+    }
+
+    private void nativeTestStringCompare() {
+        NativeUtil.nativeTestStringCompare();
     }
 }

@@ -46,4 +46,20 @@
         android:text="TEST"
         tools:layout_editor_absoluteX="95dp"
         tools:layout_editor_absoluteY="192dp" />
+
+    <Button
+        android:id="@+id/btn6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TEST"
+        tools:layout_editor_absoluteX="95dp"
+        tools:layout_editor_absoluteY="192dp" />
+
+    <Button
+        android:id="@+id/btn7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TEST"
+        tools:layout_editor_absoluteX="95dp"
+        tools:layout_editor_absoluteY="192dp" />
 </LinearLayout>

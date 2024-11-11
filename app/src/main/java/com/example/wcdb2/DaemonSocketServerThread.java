@@ -46,7 +46,7 @@ public class DaemonSocketServerThread extends Thread {
     }
 
     private void handleAction(LittleEndianDataInputStream in, LittleEndianDataOutputStream out, int action, Credentials credentials) throws IOException {
-        Log.i(TAG, "Action " + action);
+        // Log.i(TAG, "Action " + action);
 
         switch (action) {
             case ACTION_READ_MESSAGE: {
@@ -56,18 +56,23 @@ public class DaemonSocketServerThread extends Thread {
             case ACTION_WRITE_MESSAGE: {
                 String msg = readString(in);
                 if (TextUtils.isEmpty(msg)) {
-                    out.writeInt(-1);
+                    // out.writeInt(-1);
                 } else if (msg.startsWith("1:")) {
                     String auth_uin = msg.substring(2);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     Log.d(TAG, String.format("%s: %s", "set_auth_uin", auth_uin));
-                    out.writeInt(0);
+                    // out.writeInt(0);
                 } else if (msg.startsWith("2:")) {
                     String value = msg.substring(2);
                     Log.d(TAG, String.format("%s: %s", "send_message", value));
-                    out.writeInt(0);
+                    // out.writeInt(0);
                 } else {
                     Log.d(TAG, String.format("%s: %s", "unknown", msg));
-                    out.writeInt(0);
+                    // out.writeInt(0);
                 }
                 break;
             }
@@ -80,7 +85,7 @@ public class DaemonSocketServerThread extends Thread {
                 break;
         }
 
-        Log.i(TAG, "Handle action " + action + " finished");
+        // Log.i(TAG, "Handle action " + action + " finished");
     }
 
     private void handleSocket(LocalSocket socket) throws IOException {

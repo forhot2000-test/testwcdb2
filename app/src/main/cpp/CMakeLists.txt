@@ -6,6 +6,10 @@
 
 cmake_minimum_required(VERSION 3.18.1)
 
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Declares and names the project.
 
 project("mywcdb2")
@@ -25,6 +29,8 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         NativeUtil.cpp
+
+        rakan/rirud.cpp
 
         # wcdb
         wcdb.cpp)
@@ -52,6 +58,7 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
+
         xhook::xhook
 )
 

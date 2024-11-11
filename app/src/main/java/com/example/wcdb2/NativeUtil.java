@@ -1,7 +1,5 @@
 package com.example.wcdb2;
 
-import android.os.IBinder;
-
 public class NativeUtil {
     static {
         try {
@@ -14,4 +12,8 @@ public class NativeUtil {
     public native static void nativeInit();
 
     public native static void nativeTestWcdb(String file);
+
+    public native static void nativeTestSocket();
+
+    public native static void nativeTestStringCompare();
 }

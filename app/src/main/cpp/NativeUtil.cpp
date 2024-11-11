@@ -6,13 +6,26 @@
 #include <android/log.h>
 #include <xhook.h>
 #include <dlfcn.h>
+#include <mutex>
 
 #include "wcdb.h"
+#include "rakan/rirud.h"
 
 #define TAG "NativeUtil.cpp"
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, ##__VA_ARGS__)
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, ##__VA_ARGS__)
 
+
+RakanSocket &getGlobalRakanSocket();
+
+static std::string k_MicroMsg("/com.tencent.mm/MicroMsg/");
+static std::string k_EnMicroMsgDb("/EnMicroMsg.db");
+static std::string k_WxFileIndexDb("/WxFileIndex.db");
+static std::string k_AuthUin;
+
+static int get_auth_uin(std::string s_filename);
+
+static int get_relative_filename(std::string s_filename, std::string &s_relative_filename);
 
 static JavaVM *gvm;
 
@@ -40,25 +53,19 @@ static const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName);
 static void *(*ori_sqlite3_db_handle)(void *);
 
 
-static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
-    ALOGD("hook_open_v2: filename=%s", filename);
-    return ori_sqlite3_open_v2(filename, db, flags, zVfs);
+RakanSocket &getGlobalRakanSocket() {
+    static RakanSocket globalRakanSocket(5);  // 5 是重试次数
+    static std::once_flag initFlag;
+
+    std::call_once(initFlag, []() {
+        if (!globalRakanSocket.valid()) {
+            __android_log_print(ANDROID_LOG_ERROR, "DB_KOO",
+                                "Failed to initialize globalRakanSocket");
+        }
+    });
+
+    return globalRakanSocket;
 }
-
-static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *data,
-                             char **errmsg) {
-    if (ori_sqlite3_db_filename) {
-        const char *filename = ori_sqlite3_db_filename(db, "main");
-        ALOGD("hook_exec: sql=%s, filename=%s", sql, filename);
-    }
-
-    return ori_sqlite3_exec(db, sql, callback, data, errmsg);
-}
-
-static std::string k_MicroMsg("/com.tencent.mm/MicroMsg/");
-static std::string k_EnMicroMsgDb("/EnMicroMsg.db");
-static std::string k_WxFileIndexDb("/WxFileIndex.db");
-static std::string k_AuthUin;
 
 static int get_auth_uin(std::string s_filename) {
     int a = s_filename.find(k_MicroMsg);
@@ -97,6 +104,21 @@ static int get_relative_filename(std::string s_filename, std::string &s_relative
 
     s_relative_filename = s_filename.substr(a, s_filename.size() - a);
     return 0;
+}
+
+static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
+    ALOGD("hook_open_v2: filename=%s", filename);
+    return ori_sqlite3_open_v2(filename, db, flags, zVfs);
+}
+
+static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *data,
+                             char **errmsg) {
+    if (ori_sqlite3_db_filename) {
+        const char *filename = ori_sqlite3_db_filename(db, "main");
+        ALOGD("hook_exec: sql=%s, filename=%s", sql, filename);
+    }
+
+    return ori_sqlite3_exec(db, sql, callback, data, errmsg);
 }
 
 static int hook_sqlite3_step(void *stmt) {
@@ -165,8 +187,7 @@ static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName)
 }
 
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
+extern "C" JNIEXPORT void JNICALL nativeInit(JNIEnv *env, jclass clazz) {
 
     ALOGD("dlopen libWCDB.so");
     dlopen("libWCDB.so", RTLD_NOW);
@@ -198,8 +219,7 @@ Java_com_example_wcdb2_NativeUtil_nativeInit(JNIEnv *env, jclass clazz) {
     xhook_refresh(1);
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
+extern "C" JNIEXPORT void JNICALL nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
 
     int result;
 
@@ -339,6 +359,31 @@ Java_com_example_wcdb2_NativeUtil_nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
     env->ReleaseStringUTFChars(jfile, filename);
 }
 
+extern "C" JNIEXPORT void JNICALL nativeTestSocket(JNIEnv *env, jclass clazz) {
+    RakanSocket &socket = getGlobalRakanSocket();
+    if (socket.valid()) {
+        std::string s_auth_uin = "xxxxxx";
+
+        for (int i = 0; i < 10; ++i) {
+            std::string msg = "1:" + s_auth_uin + "_" + std::to_string(i);
+            ALOGD("write message: %s", msg.c_str());
+            socket.WriteMessage(msg);
+        }
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL nativeTestStringCompare(JNIEnv *env, jclass clazz) {
+    const char *filename = "xxx_libWCDB_legacy.so";
+    std::string ns(filename);
+    std::transform(ns.begin(), ns.end(), ns.begin(), ::tolower);
+    ALOGD("ns=%s", ns.c_str());
+    if (ns.length() >= 10 && ns.compare(ns.length() - 10, 10, "libwcdb.so") == 0) {
+        ALOGD("%s is libwcdb", filename);
+    } else if (ns.length() >= 17 && ns.compare(ns.length() - 17, 17, "libwcdb_legacy.so") == 0) {
+        ALOGD("%s is legacy libwcdb", filename);
+    }
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     gvm = vm;
     ALOGD("gvm: %p", gvm);
@@ -351,21 +396,24 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     ALOGD("env: %p", env);
 
-//    jclass helloJniClass = env->FindClass("com/example/HelloJni"); // 查找Java类
-//    if (helloJniClass == NULL) {
-//        return JNI_ERR; // 类找不到，返回错误码
-//    }
-//
-//    // 定义方法签名和本地方法实现
-//    JNINativeMethod methods[] = {
-//            {"nativeMethod", "(I)V", (void*)nativeMethod} // 假设有一个int参数，无返回值的本地方法
-//    };
-//
-//    // 动态注册本地方法
-//    jint result = env->RegisterNatives(helloJniClass, methods, sizeof(methods) / sizeof(methods[0]));
-//    if (result != JNI_OK) {
-//        return result; // 注册失败，返回错误码
-//    }
+    jclass aClass = env->FindClass("com/example/wcdb2/NativeUtil"); // 查找Java类
+    if (aClass == NULL) {
+        return JNI_ERR; // 类找不到，返回错误码
+    }
+
+    // 定义方法签名和本地方法实现
+    JNINativeMethod methods[] = {
+            {"nativeInit",              "()V",                   (void *) nativeInit},
+            {"nativeTestSocket",        "()V",                   (void *) nativeTestSocket},
+            {"nativeTestStringCompare", "()V",                   (void *) nativeTestStringCompare},
+            {"nativeTestWcdb",          "(Ljava/lang/String;)V", (void *) nativeTestWcdb},
+    };
+
+    // 动态注册本地方法
+    jint result = env->RegisterNatives(aClass, methods, sizeof(methods) / sizeof(methods[0]));
+    if (result != JNI_OK) {
+        return result; // 注册失败，返回错误码
+    }
 
     return JNI_VERSION_1_6; // 返回使用的JNI版本
 }
