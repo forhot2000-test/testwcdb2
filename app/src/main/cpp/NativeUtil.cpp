@@ -193,7 +193,7 @@ static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName)
 }
 
 
-extern "C" JNIEXPORT void JNICALL nativeInit(JNIEnv *env, jclass clazz) {
+void nativeInit(JNIEnv *env, jclass clazz) {
 
     ALOGD("dlopen libWCDB.so");
     dlopen("libWCDB.so", RTLD_NOW);
@@ -225,7 +225,7 @@ extern "C" JNIEXPORT void JNICALL nativeInit(JNIEnv *env, jclass clazz) {
     xhook_refresh(1);
 }
 
-extern "C" JNIEXPORT void JNICALL nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
+void nativeTestWcdb(JNIEnv *env, jclass clazz, jstring jfile) {
 
     int result;
 
@@ -365,7 +365,7 @@ extern "C" JNIEXPORT void JNICALL nativeTestWcdb(JNIEnv *env, jclass clazz, jstr
     env->ReleaseStringUTFChars(jfile, filename);
 }
 
-extern "C" JNIEXPORT void JNICALL nativeTestSocket(JNIEnv *env, jclass clazz) {
+void nativeTestSocket(JNIEnv *env, jclass clazz) {
     RakanSocket &socket = getGlobalRakanSocket();
     if (socket.valid()) {
         std::string s_auth_uin = "xxxxxx";
@@ -382,7 +382,7 @@ extern "C" JNIEXPORT void JNICALL nativeTestSocket(JNIEnv *env, jclass clazz) {
     }
 }
 
-extern "C" JNIEXPORT void JNICALL nativeTestStringCompare(JNIEnv *env, jclass clazz) {
+void nativeTestStringCompare(JNIEnv *env, jclass clazz) {
     const char *filename = "xxx_libWCDB_legacy.so";
     std::string ns(filename);
     std::transform(ns.begin(), ns.end(), ns.begin(), ::tolower);
