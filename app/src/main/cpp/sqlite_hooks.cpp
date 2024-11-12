@@ -31,27 +31,29 @@ static int (*ori_sqlite3_exec)(void *db, const char *sql, void *callback, void *
 
 static int (*ori_sqlite3_step)(void *stmt) = nullptr;
 
-static const char *(*ori_sqlite3_expanded_sql)(void *stmt);
+static char *(*ori_sqlite3_expanded_sql)(void *stmt);
 
 static const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName);
 
 static void *(*ori_sqlite3_db_handle)(void *);
 
+static void (*ori_sqlite3_free)(void *);
+
 static int get_auth_uin(std::string s_filename) {
     int a = s_filename.find(k_MicroMsg);
-    if (a < 0) {
+    if (a == std::string::npos) {
         // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
-        return 1;
+        return -1;
     }
     a += k_MicroMsg.length();
 
     int b = s_filename.find(k_EnMicroMsgDb);
-    if (b < 0) {
+    if (b == std::string::npos) {
         b = s_filename.find(k_WxFileIndexDb);
     }
-    if (b < 0) {
+    if (b == std::string::npos) {
         // ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
-        return 2;
+        return -1;
     }
 
     std::string auth_uin = s_filename.substr(a, b - a);
@@ -66,7 +68,7 @@ static int get_auth_uin(std::string s_filename) {
 
 static int get_relative_filename(std::string s_filename, std::string &s_relative_filename) {
     int a = s_filename.find(k_MicroMsg);
-    if (a < 0) {
+    if (a == std::string::npos) {
         // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
         return 1;
     }
@@ -95,8 +97,9 @@ static int hook_sqlite3_step(void *stmt) {
     if (ori_sqlite3_expanded_sql) {
 
         void *db = ori_sqlite3_db_handle(stmt);
-        const char *sql = ori_sqlite3_expanded_sql(stmt);
+        char *sql = ori_sqlite3_expanded_sql(stmt);
         const char *filename = ori_sqlite3_db_filename(db, "main");
+//        ALOGD("step: %s (%s)", sql, filename);
 
         if (sql) {
             std::string s_sql(sql);
@@ -113,12 +116,14 @@ static int hook_sqlite3_step(void *stmt) {
                 ALOGD("hook_step: %s", msg.c_str());
             }
         }
+
+        ori_sqlite3_free(reinterpret_cast<void *>(sql));
     }
 
     return ori_sqlite3_step(stmt);
 }
 
-static const char *hook_sqlite3_expanded_sql(void *stmt) {
+static char *hook_sqlite3_expanded_sql(void *stmt) {
     return ori_sqlite3_expanded_sql(stmt);
 }
 
@@ -128,6 +133,10 @@ static const char *hook_sqlite3_db_filename(void *db, const char *name) {
 
 static void *hook_sqlite3_db_handle(void *stmt) {
     return ori_sqlite3_db_handle(stmt);
+}
+
+static void hook_sqlite3_free(void *obj) {
+    return ori_sqlite3_free(obj);
 }
 
 
@@ -152,6 +161,9 @@ void registerHooks() {
     xhook_register("/data/.*libWCDB\\.so$", "sqlite3_db_handle",
                    reinterpret_cast<void *>(hook_sqlite3_db_handle),
                    reinterpret_cast<void **>(&ori_sqlite3_db_handle));
+    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_free",
+                   reinterpret_cast<void *>(hook_sqlite3_free),
+                   reinterpret_cast<void **>(&ori_sqlite3_free));
 
     xhook_refresh(1);
 }

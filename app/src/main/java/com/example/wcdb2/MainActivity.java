@@ -276,7 +276,53 @@ public class MainActivity extends AppCompatActivity {
         com.tencent.wcdb.compat.SQLiteDatabase db = com.tencent.wcdb.compat.SQLiteDatabase.openDatabase(path);
         db.execSQL("select 1");
         db.execSQL("select 2");
-        db.execSQL("insert into sampleTable(id, content) values(1, 'item 1')");
+        db.execSQL("create table if not exists FinderAccount (" +
+                "username varchar(50), " +
+                "nickname varchar(50), " +
+                "signature varchar(50), " +
+                "avatarUrl varchar(50), " +
+                "coverUrl varchar(50), " +
+                "liveCoverImgUrl varchar(50), " +
+                "sex varchar(50), " +
+                "country varchar(50), " +
+                "province varchar(50), " +
+                "city varchar(50), " +
+                "userVersion varchar(50), " +
+                "seq varchar(50), " +
+                "extFlag varchar(50), " +
+                "fansAddCount varchar(50), " +
+                "contact_user_flag varchar(50), " +
+                "spamStatus varchar(50), " +
+                "authInfo varchar(50), " +
+                "finder_version_username_history varchar(50), " +
+                "username_history_version varchar(50), " +
+                "messageLikeBuf varchar(50), " +
+                "messageCommentBuf varchar(50), " +
+                "messageFollowBuf varchar(50), " +
+                "liveInfo varchar(50), " +
+                "originalInfo varchar(50), " +
+                "originalFlag varchar(50), " +
+                "originalEntranceFlag varchar(50), " +
+                "prepareFinder varchar(50), " +
+                "systemMsgCount varchar(50), " +
+                "svrIndex varchar(50), " +
+                "memberMessageLikeBuf varchar(50), " +
+                "memberMessageCommentBuf varchar(50), " +
+                "memberMessageJoinBuf varchar(50), " +
+                "myFinderTabShowWordingExt varchar(50))");
+
+        // test memory issue
+        for (int i = 0; i < 1000; i++) {
+            db.execSQL("SELECT username, nickname, signature, avatarUrl, coverUrl, liveCoverImgUrl, sex, " +
+                    "country, province, city, userVersion, seq, extFlag, fansAddCount, contact_user_flag, " +
+                    "spamStatus, authInfo, finder_version_username_history, username_history_version, " +
+                    "messageLikeBuf, messageCommentBuf, messageFollowBuf, liveInfo, originalInfo, " +
+                    "originalFlag, originalEntranceFlag, prepareFinder, systemMsgCount, svrIndex, " +
+                    "memberMessageLikeBuf, memberMessageCommentBuf, memberMessageJoinBuf, " +
+                    "myFinderTabShowWordingExt, rowid " +
+                    "FROM FinderAccount WHERE username = '' AND  1=1");
+        }
+
         db.close();
     }
 

@@ -31,7 +31,7 @@ int (*p_sqlite3_step)(void *);
 
 const char *(*p_sqlite3_sql)(void *stmt);
 
-const char *(*p_sqlite3_expanded_sql)(void *stmt);
+char *(*p_sqlite3_expanded_sql)(void *stmt);
 
 void *(*p_sqlite3_update_hook)(void *db, void *callback, void *data);
 
