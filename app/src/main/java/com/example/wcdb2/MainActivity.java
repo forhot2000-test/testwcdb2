@@ -275,7 +275,8 @@ public class MainActivity extends AppCompatActivity {
         String path = getDatabasePath();
         com.tencent.wcdb.compat.SQLiteDatabase db = com.tencent.wcdb.compat.SQLiteDatabase.openDatabase(path);
         db.execSQL("select 1");
-        db.execSQL("select 2");
+        db.execSQL("select '中文zh-cn'");
+
         db.execSQL("create table if not exists FinderAccount (" +
                 "username varchar(50), " +
                 "nickname varchar(50), " +
@@ -320,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
                     "originalFlag, originalEntranceFlag, prepareFinder, systemMsgCount, svrIndex, " +
                     "memberMessageLikeBuf, memberMessageCommentBuf, memberMessageJoinBuf, " +
                     "myFinderTabShowWordingExt, rowid " +
-                    "FROM FinderAccount WHERE username = '' AND  1=1");
+                    "FROM FinderAccount WHERE username = '' AND  1=" + i);
         }
 
         db.close();
