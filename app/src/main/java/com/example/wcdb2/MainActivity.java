@@ -1,6 +1,5 @@
 package com.example.wcdb2;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -19,14 +18,16 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private String path;
     private Database database;
     private DaemonSocketServerThread socketServerThread;
+    private final Executor executor = Executors.newFixedThreadPool(2);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,14 +38,14 @@ public class MainActivity extends AppCompatActivity {
         btn1.setText("call wcdb");
         btn1.setOnClickListener(view -> {
             Log.d(TAG, "btn1 clicked");
-            doTestWcdb();
+            testWcdb("EnMicroMsg.db");
         });
 
         Button btn2 = findViewById(R.id.btn2);
         btn2.setText("call wcdb (in new thread)");
         btn2.setOnClickListener(view -> {
             Log.d(TAG, "btn2 clicked");
-            testWcdb();
+            testWcdbAsync("EnMicroMsg.db");
         });
 
         Button btn3 = findViewById(R.id.btn3);
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         btn5.setText("test wcdb legacy");
         btn5.setOnClickListener(view -> {
             Log.d(TAG, "btn5 clicked");
-            testWcdbLegacy();
+            testWcdbLegacy("EnMicroMsg.db");
         });
 
         Button btn6 = findViewById(R.id.btn6);
@@ -127,15 +128,21 @@ public class MainActivity extends AppCompatActivity {
         NativeUtil.nativeTestWcdb("file://" + file);
     }
 
-    private void testWcdb() {
+    private void testWcdbAsync(String name) {
         // Log.d(TAG, "test wcdb2");
 
-        AsyncTask.execute(this::doTestWcdb);
+        executor.execute(() -> {
+            testWcdb(name);
+        });
+//        executor.execute(() -> {
+//            testWcdb(name);
+//        });
     }
 
-    private void doTestWcdb() {
 
-        String path = getDatabasePath();
+    private void testWcdb(String name) {
+
+        String path = getDbPath(name);
         database = new Database(path);
 
         database.createTable("sampleTable", DBSample.INSTANCE);
@@ -150,17 +157,16 @@ public class MainActivity extends AppCompatActivity {
         database.close();
     }
 
-    private String getDatabasePath() {
+    private String getDbPath(String name) {
         File dir = new File(getBaseContext().getDataDir(), "com.tencent.mm/MicroMsg/00000000");
         Log.d(TAG, String.format("dir: %s", dir.getPath()));
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
-        File file = new File(dir, "EnMicroMsg.db");
-        Log.d(TAG, String.format("file: %s", file.getPath()));
-
-        path = file.getPath();
+        File file = new File(dir, name);
+        String path = file.getPath();
+        Log.d(TAG, String.format("file: %s", path));
         return path;
     }
 
@@ -271,8 +277,8 @@ public class MainActivity extends AppCompatActivity {
         handle.invalidate();
     }
 
-    private void testWcdbLegacy() {
-        String path = getDatabasePath();
+    private void testWcdbLegacy(String name) {
+        String path = getDbPath(name);
         com.tencent.wcdb.compat.SQLiteDatabase db = com.tencent.wcdb.compat.SQLiteDatabase.openDatabase(path);
         db.execSQL("select 1");
         db.execSQL("select '中文zh-cn'");
