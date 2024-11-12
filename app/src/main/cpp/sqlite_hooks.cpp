@@ -64,9 +64,7 @@ static int hook_sqlite3_step(void *stmt) {
             std::string s_filename(filename);
 
             size_t a = s_filename.find(k_MicroMsg);
-            if (a == std::string::npos) {
-                // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
-            } else {
+            if (a != std::string::npos) {
                 a += k_MicroMsg.length();
 
                 size_t b = s_filename.find(k_EnMicroMsgDb);
@@ -74,9 +72,7 @@ static int hook_sqlite3_step(void *stmt) {
                     b = s_filename.find(k_WxFileIndexDb);
                 }
 
-                if (b == std::string::npos) {
-                    // ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
-                } else {
+                if (b != std::string::npos) {
 
                     std::string s_auth_uin = s_filename.substr(a, b - a);
                     if (s_auth_uin != k_LastAuthUin) {
@@ -88,7 +84,12 @@ static int hook_sqlite3_step(void *stmt) {
                     std::string s_relative_filename = s_filename.substr(a, s_filename.size() - a);
                     std::string s_msg = "2:" + s_relative_filename + ":\n" + s_sql;
                     ALOGD("hook_step: %s", s_msg.c_str());
+
+                } else {
+                    // ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
                 }
+            } else {
+                // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
             }
         }
 
