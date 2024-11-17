@@ -18,23 +18,19 @@ static std::string k_EnMicroMsgDb("/EnMicroMsg.db");
 static std::string k_WxFileIndexDb("/WxFileIndex.db");
 static std::string k_LastAuthUin;
 
+int (*ori_sqlite3_open_v2)(const char *filename, void **db, int flags, const char *zVfs) = nullptr;
 
-static int (*ori_sqlite3_open_v2)(const char *filename, void **db, int flags,
-                                  const char *zVfs) = nullptr;
+int (*ori_sqlite3_exec)(void *db, const char *sql, void *callback, void *, char **errmsg) = nullptr;
 
-static int (*ori_sqlite3_exec)(void *db, const char *sql, void *callback, void *,
-                               char **errmsg) = nullptr;
+int (*ori_sqlite3_step)(void *stmt) = nullptr;
 
-static int (*ori_sqlite3_step)(void *stmt) = nullptr;
+char *(*ori_sqlite3_expanded_sql)(void *stmt) = nullptr;
 
-static char *(*ori_sqlite3_expanded_sql)(void *stmt);
+const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName) = nullptr;
 
-static const char *(*ori_sqlite3_db_filename)(void *db, const char *zDbName);
+void *(*ori_sqlite3_db_handle)(void *) = nullptr;
 
-static void *(*ori_sqlite3_db_handle)(void *);
-
-static void (*ori_sqlite3_free)(void *);
-
+void (*ori_sqlite3_free)(void *) = nullptr;
 
 static int hook_sqlite3_open_v2(const char *filename, void **db, int flags, const char *zVfs) {
     ALOGD("hook_open_v2: filename=%s", filename);
@@ -95,26 +91,10 @@ static int hook_sqlite3_step(void *stmt) {
     return ori_sqlite3_step(stmt);
 }
 
-static char *hook_sqlite3_expanded_sql(void *stmt) {
-    return ori_sqlite3_expanded_sql(stmt);
-}
-
-static const char *hook_sqlite3_db_filename(void *db, const char *name) {
-    return ori_sqlite3_db_filename(db, name);
-}
-
-static void *hook_sqlite3_db_handle(void *stmt) {
-    return ori_sqlite3_db_handle(stmt);
-}
-
-static void hook_sqlite3_free(void *obj) {
-    return ori_sqlite3_free(obj);
-}
-
-
 void registerHooks() {
     xhook_clear();
     xhook_enable_debug(1);
+
     xhook_register("/data/.*libWCDB\\.so$", "sqlite3_open_v2",
                    reinterpret_cast<void *>(hook_sqlite3_open_v2),
                    reinterpret_cast<void **>(&ori_sqlite3_open_v2));
@@ -124,18 +104,6 @@ void registerHooks() {
     xhook_register("/data/.*libWCDB\\.so$", "sqlite3_step",
                    reinterpret_cast<void *>(hook_sqlite3_step),
                    reinterpret_cast<void **>(&ori_sqlite3_step));
-    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_expanded_sql",
-                   reinterpret_cast<void *>(hook_sqlite3_expanded_sql),
-                   reinterpret_cast<void **>(&ori_sqlite3_expanded_sql));
-    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_db_filename",
-                   reinterpret_cast<void *>(hook_sqlite3_db_filename),
-                   reinterpret_cast<void **>(&ori_sqlite3_db_filename));
-    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_db_handle",
-                   reinterpret_cast<void *>(hook_sqlite3_db_handle),
-                   reinterpret_cast<void **>(&ori_sqlite3_db_handle));
-    xhook_register("/data/.*libWCDB\\.so$", "sqlite3_free",
-                   reinterpret_cast<void *>(hook_sqlite3_free),
-                   reinterpret_cast<void **>(&ori_sqlite3_free));
 
     xhook_refresh(1);
 }

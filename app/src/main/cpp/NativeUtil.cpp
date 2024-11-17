@@ -75,13 +75,27 @@ static int wcdbExecCallback(void *data, int argc, char **argv, char **azColName)
 }
 
 
+void x_register_2(void *handle, const char *name, void **p) {
+    // 使用 dlsym 获取符号地址，并将结果存储在 p 指向的位置
+    *p = dlsym(handle, name);
+}
+
 void nativeInit(JNIEnv *env, jclass clazz) {
 
     ALOGD("dlopen libWCDB.so");
-    dlopen("libWCDB.so", RTLD_NOW);
+    void *handle = dlopen("libWCDB.so", RTLD_NOW);
 
     ALOGD("dlopen libWCDB_legacy.so");
     dlopen("libWCDB_legacy.so", RTLD_NOW);
+
+    x_register_2(handle, "sqlite3_expanded_sql",
+                 reinterpret_cast<void **>(&ori_sqlite3_expanded_sql));
+    x_register_2(handle, "sqlite3_db_filename",
+                 reinterpret_cast<void **>(&ori_sqlite3_db_filename));
+    x_register_2(handle, "sqlite3_db_handle",
+                 reinterpret_cast<void **>(&ori_sqlite3_db_handle));
+    x_register_2(handle, "sqlite3_free",
+                 reinterpret_cast<void **>(&ori_sqlite3_free));
 
     registerHooks();
 }
