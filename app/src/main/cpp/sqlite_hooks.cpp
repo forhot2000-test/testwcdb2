@@ -13,10 +13,10 @@
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, ##__VA_ARGS__)
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, ##__VA_ARGS__)
 
-static std::string k_MicroMsg("/com.tencent.mm/MicroMsg/");
-static std::string k_EnMicroMsgDb("/EnMicroMsg.db");
-static std::string k_WxFileIndexDb("/WxFileIndex.db");
-static std::string k_LastAuthUin;
+static const char *k_MicroMsg = "/com.tencent.mm/MicroMsg/";
+static const char *k_EnMicroMsgDb = "/EnMicroMsg.db";
+static const char *k_WxFileIndexDb = "/WxFileIndex.db";
+static char *k_LastAuthUin = new char[50];
 
 int (*ori_sqlite3_open_v2)(const char *filename, void **db, int flags, const char *zVfs) = nullptr;
 
@@ -47,6 +47,8 @@ static int hook_sqlite3_exec(void *db, const char *sql, void *callback, void *da
     return ori_sqlite3_exec(db, sql, callback, data, errmsg);
 }
 
+static int32_t k_message_count = 0;
+
 static int hook_sqlite3_step(void *stmt) {
     if (ori_sqlite3_expanded_sql) {
 
@@ -56,7 +58,7 @@ static int hook_sqlite3_step(void *stmt) {
 
         size_t a = s_filename.find(k_MicroMsg);
         if (a != std::string::npos) {
-            a += k_MicroMsg.length();
+            a += strlen(k_MicroMsg);
 
             size_t b = s_filename.find(k_EnMicroMsgDb);
             if (b == std::string::npos) {
@@ -65,26 +67,28 @@ static int hook_sqlite3_step(void *stmt) {
 
             if (b != std::string::npos) {
                 std::string s_auth_uin = s_filename.substr(a, b - a);
+                ALOGD("#%d auth_uin: (%d) %s", k_message_count++, s_auth_uin.length(),
+                      s_auth_uin.c_str());
+
                 if (s_auth_uin != k_LastAuthUin) {
-                    k_LastAuthUin = s_auth_uin;
-                    std::string s_msg = "1:" + s_auth_uin;
-                    ALOGD("auth_uin: %s", s_msg.c_str());
+                    strcpy(k_LastAuthUin, s_auth_uin.c_str());
+                    ALOGD("#%d last_auth_uin: (%d) %s", k_message_count++, strlen(k_LastAuthUin),
+                          k_LastAuthUin);
                 }
 
                 char *sql = ori_sqlite3_expanded_sql(stmt);
                 if (sql) {
-                    ALOGD("step: %s (%s)", sql, filename);
                     std::string s_relative_filename = s_filename.substr(a, s_filename.size() - a);
-                    std::string s_msg = "2:" + s_relative_filename + ":\n" + sql;
-                    ALOGD("hook_step: %s", s_msg.c_str());
+                    std::string s_msg = s_relative_filename + ":\n" + sql;
+                    ALOGD("#%d hook_step: (%d) %s", k_message_count++, s_msg.length(),
+                          s_msg.c_str());
                 }
                 ori_sqlite3_free(reinterpret_cast<void *>(sql));
-
             } else {
                 // ALOGD("[auth_uin] Not EnMicroMsg.db or WxFileIndex.db, %s", s_filename.c_str());
             }
         } else {
-            // ALOGD("[auth_uin] Not in MicroMsg, %s", s_filename.c_str());
+            ALOGD("Not contains MicroMsg, %s", s_filename.c_str());
         }
     }
 
